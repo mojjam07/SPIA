@@ -13,4 +13,10 @@ urlpatterns = [
     path('inventory/', views.inventory, name='inventory'),
     path('receipt/', views.receipt, name='receipt'),
     path('sales/', views.sales, name='sales'),
+
+    # API routes
+    path('api/signup/', views.SignupAPIView.as_view(), name='api_signup'),
+    path('api/login/', views.LoginAPIView.as_view(), name='api_login'),
+    path('api/payment/', views.PaymentAPIView.as_view(), name='api_payment'),
+    path('api/usage/', views.UsageTrackingAPIView.as_view(), name='api_usage'),
 ]

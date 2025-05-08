@@ -1,0 +1,20 @@
+Store Audit System - Project Overview
+
+The Store Audit System is a Django-based inventory and sales management application designed to streamline retail operations. It provides comprehensive features including inventory management, sales processing, receipt generation, and sales reporting. The system supports local storage and can optionally use PostgreSQL as its database backend.
+
+Key Features:
+- Inventory management to track stock levels and product details
+- Sales processing with receipt generation for customer transactions
+- Detailed sales reporting to analyze business performance
+- Support for local storage with optional PostgreSQL integration
+
+Technologies Used:
+- Python 3.8+
+- Django web framework
+- SQLite (default) or PostgreSQL database
+- HTML, CSS, and JavaScript for frontend components
+
+Deployment:
+The application can be run locally for development or deployed in production with additional configuration such as setting DEBUG to False, using PostgreSQL, and configuring WSGI and web servers.
+
+This overview provides a summary of the project's purpose, features, and technology stack.
