@@ -19,4 +19,8 @@ urlpatterns = [
     path('api/login/', views.LoginAPIView.as_view(), name='api_login'),
     path('api/payment/', views.PaymentAPIView.as_view(), name='api_payment'),
     path('api/usage/', views.UsageTrackingAPIView.as_view(), name='api_usage'),
+
+    # StockItem API routes
+    path('api/stockitems/', views.StockItemListCreateAPIView.as_view(), name='api_stockitem_list_create'),
+    path('api/stockitems/<int:pk>/', views.StockItemRetrieveUpdateDestroyAPIView.as_view(), name='api_stockitem_detail'),
 ]

@@ -12,7 +12,9 @@ from rest_framework.decorators import api_view, permission_classes
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import UserProfile, PaymentStatus, UsageStats
+from .models import UserProfile, PaymentStatus, UsageStats, StockItem
+from .serializers import StockItemSerializer
+from rest_framework import generics, permissions
 
 # Create your views here.
 def landing(request):
@@ -166,6 +168,23 @@ class SignupAPIView(APIView):
         UserProfile.objects.create(user=user, full_name=full_name)
         increment_signup()
         return Response({'message': 'Signup successful. Please complete payment.'}, status=status.HTTP_201_CREATED)
+
+class StockItemListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = StockItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return StockItem.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = StockItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return StockItem.objects.filter(user=self.request.user)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginAPIView(APIView):
