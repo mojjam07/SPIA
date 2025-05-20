@@ -59,7 +59,7 @@ mainapp/migrations/
 project/migrations/
 
 # Ignore deployment settings file
-project/settings_deploy.py
+project/deployment_settings.py
 
 # Ignore Docker environment files
 .env.*
@@ -67,5 +67,5 @@ project/settings_deploy.py
 
 # Ignore Docker files if you want to exclude them from git
 # Uncomment if needed
-# Dockerfile
-# docker-compose.yml
+Dockerfile
+docker-compose.yml

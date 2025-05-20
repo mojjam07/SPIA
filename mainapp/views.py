@@ -169,7 +169,10 @@ class SignupAPIView(APIView):
         increment_signup()
         return Response({'message': 'Signup successful. Please complete payment.'}, status=status.HTTP_201_CREATED)
 
+from rest_framework.authentication import TokenAuthentication
+
 class StockItemListCreateAPIView(generics.ListCreateAPIView):
+    authentication_classes = [TokenAuthentication]
     serializer_class = StockItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -180,6 +183,7 @@ class StockItemListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
 class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [TokenAuthentication]
     serializer_class = StockItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 

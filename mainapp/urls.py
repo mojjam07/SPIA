@@ -1,5 +1,6 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
+from rest_framework.authtoken import views as drf_views
 
 urlpatterns = [
     path('', views.landing, name='landing'),
@@ -23,4 +24,7 @@ urlpatterns = [
     # StockItem API routes
     path('api/stockitems/', views.StockItemListCreateAPIView.as_view(), name='api_stockitem_list_create'),
     path('api/stockitems/<int:pk>/', views.StockItemRetrieveUpdateDestroyAPIView.as_view(), name='api_stockitem_detail'),
+
+    # Token auth
+    path('api-token-auth/', drf_views.obtain_auth_token, name='api_token_auth'),
 ]

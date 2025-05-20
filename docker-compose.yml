@@ -11,8 +11,13 @@ services:
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/store_audit
+      - DB_NAME=store_audit
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
       - DEBUG=False
+      - ALLOWED_HOSTS=localhost,127.0.0.1,yourdomain.com
 
   db:
     image: postgres:13-alpine
