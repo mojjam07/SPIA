@@ -10,6 +10,8 @@ environ.Env.read_env()
 
 DEBUG = env('DEBUG')
 
+PORT = os.environ.get('PORT', '8000')
+
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['spia.onrender.com', 'www.stockpilot.com'])
 
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True)
