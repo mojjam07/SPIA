@@ -10,13 +10,14 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link rel="icon" type="image/png" href="{% static 'images/stockpilot.png' %}" />
   </head>
   <body
     class="d-flex flex-column min-vh-100 justify-content-center align-items-center landing-bg"
   >
     <div
       class="text-center p-4 border rounded bg-white shadow"
-      style="max-width: 400px"
+      style="max-width: 800px"
     >
       <img
         src="{% static 'images/stockpilot.png' %}"
@@ -25,12 +26,13 @@
         style="max-width: 150px"
       />
 
-      <h1 class="mb-3 text-dark">Welcome to StockPilot</h1>
-      <p class="mb-4 text-dark">Your inventory and sales management system.</p>
+      <h1 class="mb-3 text-dark">StockPilot Inventory</h1>
+      <p class="mb-4 text-dark">This inventory management system tracks and controls your company's stock levels, orders, sales, and deliveries. It monitors
+      product quantities, tracks stockouts and overstocking, and provides real-time visibility into
+      inventory across multiple locations. This system helps  to optimize costs, improve efficiency, reduce waste, and ensure
+      accurate inventory records for better decision-making and customer satisfaction.</p>
 
-      <a href="{% url 'access_control' %}" class="btn btn-primary btn-lg"
-        >Access Application</a
-      >
+      <a href="{% url 'access_control' %}" class="btn btn-primary btn-lg">Access Application</a>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </body>
