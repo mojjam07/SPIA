@@ -25,16 +25,30 @@ SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=True)
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': env('DB_NAME', default='your_db_name'),
+#         'USER': env('DB_USER', default='your_db_user'),
+#         'PASSWORD': env('DB_PASSWORD', default='your_db_password'),
+#         'HOST': env('DB_HOST', default='your_db_host'),
+#         'PORT': env('DB_PORT', default='your_db_port'),
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', default='your_db_name'),
-        'USER': env('DB_USER', default='your_db_user'),
-        'PASSWORD': env('DB_PASSWORD', default='your_db_password'),
-        'HOST': env('DB_HOST', default='your_db_host'),
-        'PORT': env('DB_PORT', default='your_db_port'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# For PostgreSQL (recommended for production)
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    }
 
 SECURE_BROWSER_XSS_FILTER = env.bool('SECURE_BROWSER_XSS_FILTER', default=True)
 SECURE_CONTENT_TYPE_NOSNIFF = env.bool('SECURE_CONTENT_TYPE_NOSNIFF', default=True)
