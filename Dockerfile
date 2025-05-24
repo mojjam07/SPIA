@@ -15,6 +15,8 @@ COPY . /app/
 
 RUN python manage.py collectstatic --noinput
 
+RUN ./build.sh
+
 EXPOSE 10000
 
 CMD ["./build.sh", "gunicorn", "project.wsgi:application", "--bind", "0.0.0.0:10000"]
