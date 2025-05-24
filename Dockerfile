@@ -15,6 +15,8 @@ COPY . /app/
 
 RUN python manage.py collectstatic --noinput
 
+RUN python -m pip install Pillow
+
 RUN ./build.sh
 
 EXPOSE 10000
