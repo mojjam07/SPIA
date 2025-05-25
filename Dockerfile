@@ -27,6 +27,10 @@ COPY . /app/
 # Create staticfiles directory
 RUN mkdir -p /app/staticfiles
 
+# Perform migrations ahead
+RUN python manage.py makemigrations
+RUN python manage.py migrate
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
