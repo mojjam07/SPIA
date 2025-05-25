@@ -27,4 +27,6 @@ urlpatterns = [
 
     # Token auth
     path('api-token-auth/', drf_views.obtain_auth_token, name='api_token_auth'),
+
+    path('health/', views.health_check, name='health_check'),
 ]

@@ -244,3 +244,44 @@ class UsageTrackingAPIView(APIView):
             'logins': usage_stats_obj.logins,
         }
         return Response({'users': users_data, 'usage_stats': usage_stats_data}, status=status.HTTP_200_OK)
+
+
+# views.py - Add this to your main app or create a separate health app
+
+from django.http import JsonResponse
+from django.db import connection
+from django.conf import settings
+import os
+
+def health_check(request):
+    """
+    Health check endpoint for Render deployment monitoring
+    """
+    health_status = {
+        "status": "healthy",
+        "timestamp": "2024-05-25T10:00:00Z",
+        "version": "1.0.0",
+        "checks": {}
+    }
+    
+    # Database check
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            health_status["checks"]["database"] = "healthy"
+    except Exception as e:
+        health_status["status"] = "unhealthy"
+        health_status["checks"]["database"] = f"error: {str(e)}"
+    
+    # Static files check
+    if os.path.exists(settings.STATIC_ROOT):
+        health_status["checks"]["static_files"] = "healthy"
+    else:
+        health_status["checks"]["static_files"] = "warning: static root not found"
+    
+    # Environment check
+    health_status["checks"]["debug_mode"] = settings.DEBUG
+    health_status["checks"]["allowed_hosts"] = settings.ALLOWED_HOSTS
+    
+    status_code = 200 if health_status["status"] == "healthy" else 503
+    return JsonResponse(health_status, status=status_code)

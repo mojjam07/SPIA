@@ -6,3 +6,33 @@ gunicorn==21.2.0
 psycopg2-binary==2.9.9
 python-dotenv==1.0.0
 djangorestframework==3.14.0
+
+# For Docker
+# Django
+Django>=4.2,<5.0
+django-environ>=0.10.0
+
+# Database
+psycopg2-binary>=2.9.0
+dj-database-url>=2.0.0
+
+# Web Server
+gunicorn>=21.2.0
+
+# Static Files
+whitenoise>=6.5.0
+
+# Security & Performance
+django-cors-headers>=4.2.0
+django-storages>=1.13.0
+
+# Utilities
+Pillow>=10.0.0  # If using ImageField
+python-decouple>=3.8  # For environment variables
+requests>=2.31.0
+
+# Development (optional - remove for production)
+django-debug-toolbar>=4.2.0
+
+# Health checks
+django-health-check>=3.17.0
