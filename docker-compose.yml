@@ -10,6 +10,7 @@ services:
     environment:
       - DEBUG=True
       - DATABASE_URL=postgresql://postgres:password@db:5432/django_db
+      - DJANGO_DEPLOYMENT=true
     depends_on:
       - db
     command: >
