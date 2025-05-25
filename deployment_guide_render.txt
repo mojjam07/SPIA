@@ -1,0 +1,65 @@
+Deployment Guide for Django Project on Render
+
+1. Prepare Your Project
+- Ensure your Django project has a requirements.txt file listing all dependencies.
+- Ensure you have a Dockerfile or use Render's native Python environment.
+- Confirm your database settings in project/settings.py are configured for production (e.g., use PostgreSQL or another production-grade DB, not SQLite).
+
+2. Create a Render Account
+- Sign up or log in to https://render.com.
+
+3. Create a New Web Service on Render
+- Click "New" -> "Web Service".
+- Connect your GitHub/GitLab repository containing the Django project.
+- Select the branch to deploy.
+
+4. Configure Build and Start Commands
+- Build Command: 
+  ```
+  pip install -r requirements.txt
+  ```
+- Start Command:
+  ```
+  gunicorn project.wsgi:application
+  ```
+  (Replace 'project' with your Django project folder name if different.)
+
+5. Environment Variables
+- Set environment variables in Render dashboard:
+  - SECRET_KEY: Your Django secret key.
+  - DEBUG: False
+  - ALLOWED_HOSTS: Your Render service URL or domain.
+  - DATABASE_URL: Your production database URL (e.g., PostgreSQL connection string).
+
+6. Database Setup
+- Use Render's managed PostgreSQL or connect to an external database.
+- Update your Django DATABASES setting to use the production database.
+- Ensure migrations are applied after deployment.
+
+7. Applying Migrations on Render
+- You can run migrations via Render's shell or by adding a migration step in your deployment script:
+  ```
+  python manage.py migrate
+  ```
+- Alternatively, create a custom startup script that runs migrations before starting the server.
+
+8. Static Files
+- Collect static files:
+  ```
+  python manage.py collectstatic --noinput
+  ```
+- Configure static files serving (e.g., use WhiteNoise or a CDN).
+
+9. Additional Configuration
+- Configure logging, security settings, and any other production settings.
+
+10. Deploy and Monitor
+- Deploy the service.
+- Monitor logs and health checks on Render dashboard.
+
+Summary:
+- Ensure migrations are applied in production to avoid missing tables.
+- Use Render's shell or deployment hooks to run migrations.
+- Use a production-ready database instead of SQLite.
+
+For detailed Render deployment examples, refer to Render's official docs: https://render.com/docs/deploy-django

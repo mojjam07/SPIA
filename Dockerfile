@@ -13,9 +13,10 @@ RUN pip install -r requirements.txt
 
 COPY . /app/
 
-RUN python manage.py collectstatic --noinput
 
 RUN python -m pip install Pillow
+
+RUN python manage.py collectstatic --noinput
 
 RUN ./build.sh
 
