@@ -1,383 +1,268 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>StockPilot</title>
-    <link rel="stylesheet" href="{% static 'styles.css' %}" />
-    <link
-      rel="icon"
-      type="image/png"
-      href="{% static 'images/stockpilot.png' %}"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body class="d-flex flex-column min-vh-100">
-    <div class="container-fluid flex-grow-1">
-      <nav
-        class="navbar navbar-expand-lg navbar-dark bg-primary mb-4"
-        id="main-nav"
-      >
-        <div class="container d-flex align-items-center">
-          <a
-            class="navbar-brand d-flex align-items-center"
-            href="#"
-            onclick="showInventory()"
-          >
-            <img
-              class="img-fluid me-2"
-              width="150"
-              height="auto"
-              src="{% static 'images/stockpilot.png' %}"
-              alt="StockPilot Logo"
-            />
-          </a>
-          <button
-            class="navbar-toggler"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav"
-          >
-            <span class="navbar-toggler-icon"></span>
+    <title>StockPilot Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'index.css' %}" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="{% static 'images/stockpilot.png' %}" />
+
+</head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="#" onclick="showInventory()">
+          <img width="120" height="auto" src="{% static 'images/stockpilot.png' %}" alt="StockPilot Logo" />
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="#" onclick="showInventory()">
+                <i class="fas fa-boxes"></i> Inventory
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="showSales()">
+                <i class="fas fa-shopping-cart"></i> Sales
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="showReports()">
+                <i class="fas fa-chart-bar"></i> Reports
+              </a>
+            </li>
+            <li class="nav-item">
+              {% if username %} {% if username == 'developer' %}
+              <a class="nav-link" href="{% url 'usage_tracking' %}">
+                <i class="fas fa-user"></i> {{ username }}</a>{% else %}<a class="nav-link" href="{% url 'logout' %}">{{
+                username }} (Logout)
+              </a>
+              {% endif %} {% endif %}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main-container">
+      <!-- Inventory Section -->
+      <div id="inventory-section" class="section-container">
+        <h2 class="section-title">
+          <i class="fas fa-plus-circle"></i>
+          Stock Entries
+        </h2>
+        <form id="add-item-form" class="add-item-form">
+          <input id="item-name" type="text" class="form-input" placeholder="Item Name" required />
+          <input id="item-size" type="text" class="form-input" placeholder="Size" required />
+          <input id="item-price" type="number" step="0.01" class="form-input" placeholder="Price" required />
+          <input id="item-quantity" type="number" class="form-input" placeholder="Quantity" required />
+          <input id="item-image" type="file" class="form-input" accept="image/*" required />
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-plus"></i>
+            Add Item
           </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-              <li class="nav-item">
-                <a class="nav-link" href="#" onclick="showInventory()"
-                  >Inventory</a
-                >
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#" onclick="showSales()">Sales</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#" onclick="showReports()">Reports</a>
-              </li>
-              <li class="nav-item">
-                {% if username %} {% if username == 'developer' %}
-                <a class="nav-link" href="{% url 'usage_tracking' %}"
-                  >{{ username }}</a
-                >
-                {% else %}
-                <a class="nav-link" href="{% url 'logout' %}"
-                  >{{ username }} (Logout)</a
-                >
-                {% endif %} {% endif %}
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+        </form>
 
-      <div class="container" id="inventory-section">
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <h2>Stock Entries</h2>
-            <form
-              id="add-item-form"
-              class="d-flex flex-nowrap align-items-center gap-2"
-            >
-              <div>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="item-name"
-                  placeholder="Item Name"
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="item-size"
-                  placeholder="Size"
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="number"
-                  step="0.01"
-                  class="form-control"
-                  id="item-price"
-                  placeholder="Price"
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="item-quantity"
-                  placeholder="Quantity"
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  type="file"
-                  class="form-control"
-                  id="item-image"
-                  required
-                />
-              </div>
-              <div>
-                <button type="submit" class="btn btn-primary">Add</button>
-              </div>
-            </form>
+        <h3 class="section-title">
+          <i class="fas fa-warehouse"></i>
+          Current Available Stocks
+        </h3>
+          <div id="inventory-cards" class="inventory-cards-container">
           </div>
-          <div class="col-md-12 mb-3">
-            <h3 class="mt-4">Current Available Stocks</h3>
-            <div id="inventory-cards" class="inventory-cards-container"></div>
-          </div>
-        </div>
       </div>
 
-      <div class="container" id="sales-section" style="display: none">
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <h2>Sales</h2>
-            <form id="sale-form" class="row g-3 align-items-center">
-              <div class="col-auto">
-                <select id="sale-item" class="form-select" required>
-                  <option value="">Select an item...</option>
-                </select>
-              </div>
-              <div class="col-auto">
-                <input
-                  type="number"
-                  id="sale-quantity"
-                  class="form-control"
-                  placeholder="Quantity"
-                  required
-                  min="1"
-                />
-              </div>
-              <div class="col-auto">
-                <button type="submit" class="btn btn-primary">
-                  Add to Cart
-                </button>
-              </div>
-            </form>
-          </div>
-          <div class="col-md-12 mb-3">
-            <h3>Current Cart</h3>
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Size</th>
-                  <th>Quantity</th>
-                  <th>Price</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody id="cart-items"></tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="4" class="text-end"><strong>Total:</strong></td>
-                  <td id="cart-total">N0.00</td>
-                </tr>
-              </tfoot>
-            </table>
-            <button class="btn btn-success" onclick="completeSale()">
-              Complete Sale
-            </button>
-          </div>
-        </div>
+      <!-- Sales Section -->
+      <div id="sales-section" class="section-container" style="display: none;">
+        <h2 class="section-title">
+          <i class="fas fa-shopping-cart"></i>
+          Sales Management
+        </h2>
+        <form id="sale-form" class="add-item-form">
+          <select id="sale-item" class="form-select" required>
+            <option value="">Select an item...</option>
+            <option value="sample">Sample Product - Medium</option>
+          </select>
+          <input id="sale-quantity" type="number" class="form-input" placeholder="Quantity" required min="1" />
+          <button type="submit" class="btn-primary">
+            <i class="fas fa-cart-plus"></i>
+            Add to Cart
+          </button>
+        </form>
+
+        <h3 class="section-title">
+          <i class="fas fa-receipt"></i>
+          Current Cart
+        </h3>
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Size</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="cart-items">
+            <tr>
+              <td colspan="5" style="text-align: center; color: #666;">Cart is empty</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr style="background: rgba(102, 126, 234, 0.1); font-weight: bold;">
+              <td colspan="4" style="text-align: right;">Total:</td>
+              <td id="cart-total">₦0.00</td>
+            </tr>
+          </tfoot>
+        </table>
+        <button class="btn-success" style="margin-top: 1rem;">
+          <i class="fas fa-check-circle"></i>
+          Complete Sale
+        </button>
       </div>
 
-      <div class="container" id="reports-section" style="display: none">
-        <div class="row">
-          <div class="col-md-12 mb-3 p-3">
-            <h2>Reports</h2>
-            <div class="row">
-              <div class="col-md-6 p-3">
-                <canvas id="topProductsChart" width="400" height="200"></canvas>
-              </div>
-              <div class="col-md-6 p-3">
-                <canvas id="salesTrendChart" width="400" height="200"></canvas>
-              </div>
+      <!-- Reports Section -->
+      <div id="reports-section" class="section-container" style="display: none;">
+        <h2 class="section-title">
+          <i class="fas fa-chart-line"></i>
+          Analytics & Reports
+        </h2>
+
+          <div class="chart-grid">
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Top Products</h4>
+              <canvas id="topProductsChart"></canvas>
             </div>
-            <div class="row">
-              <div class="col-md-6 p-3"><canvas id="dailyChart"></canvas></div>
-              <div class="col-md-6 p-3"><canvas id="weeklyChart"></canvas></div>
-              <div class="col-md-6 p-3">
-                <canvas id="monthlyChart"></canvas>
-              </div>
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Sales Trend</h4>
+              <canvas id="salesTrendChart"></canvas>
             </div>
-            <div class="row">
-              <div class="col-md-6">
-                <canvas id="inventoryChart" width="400" height="200"></canvas>
-              </div>
-              <div class="col-md-6">
-                <canvas id="revenueChart" width="400" height="200"></canvas>
-              </div>
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Daily Sales</h4>
+              <canvas id="dailyChart"></canvas>
             </div>
-            <div class="row">
-              <div class="col-md-12">
-                <h3>Sales Summary</h3>
-                <table class="table table-striped" id="sales-summary-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Date</th>
-                      <th>Total</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
-              <div class="col-md-12">
-                <h3 class="mt-4">Deleted Items Log</h3>
-                <button id="sendDeletedItemsEmail" class="btn btn-warning mb-3">
-                  Clear Data
-                </button>
-                <table class="table table-striped" id="deleted-items-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Size</th>
-                      <th>Price</th>
-                      <th>Quantity</th>
-                      <th>Deleted At</th>
-                      <th>Snapshot</th>
-                    </tr>
-                  </thead>
-                  <tbody></tbody>
-                </table>
-              </div>
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Revenue Overview</h4>
+              <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Inventory Levels</h4>
+              <canvas id="inventoryChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Weekly Sales</h4>
+              <canvas id="weeklyChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h4 style="margin-bottom: 1rem; color: #667eea;">Monthly Sales</h4>
+              <canvas id="monthlyChart"></canvas>
             </div>
           </div>
+
+        <div class="section-container">
+          <h3 class="section-title">
+            <i class="fas fa-list"></i>
+            Sales Summary
+          </h3>
+          <table class="modern-table" id="sales-summary-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="4" style="text-align: center; color: #666;">No sales data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="section-container" style="margin-top: 2rem;">
+          <h3 class="section-title">
+            <i class="fas fa-list"></i>
+            Deleted Items
+          </h3>
+          <table class="modern-table" id="deleted-items-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Deleted At</th>
+                <th>Snapshot</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6" style="text-align: center; color: #666;">No deleted items</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <!-- Receipt Modal -->
-      <div
-        class="modal fade"
-        id="receiptModal"
-        tabindex="-1"
-        aria-labelledby="receiptModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
+    <!-- Update Item Modal -->
+    <div class="modal fade" id="updateItemModal" tabindex="-1" aria-labelledby="updateItemModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form id="update-item-form">
             <div class="modal-header">
-              <h5 class="modal-title" id="receiptModalLabel">Receipt</h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
+              <h5 class="modal-title" id="updateItemModalLabel">Update Item</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <pre id="receipt-content" style="white-space: pre-wrap"></pre>
+              <input id="update-item-name" type="text" class="form-control" readonly />
+              <input id="update-item-size" type="text" class="form-control" readonly />
+              <input id="update-item-quantity" type="number" class="form-control" min="0" />
+              <input id="update-item-price" type="number" step="0.01" class="form-control" min="0" />
             </div>
             <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-primary"
-                id="printReceiptButton"
-              >
-                Print
-              </button>
+              <button type="submit" class="btn btn-primary">Update</button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
+    </div>
 
-      <!-- Update Item Modal -->
-      <div
-        class="modal fade"
-        id="updateItemModal"
-        tabindex="-1"
-        aria-labelledby="updateItemModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <form id="update-item-form">
-              <div class="modal-header">
-                <h5 class="modal-title" id="updateItemModalLabel">
-                  Update Item
-                </h5>
-                <button
-                  type="button"
-                  class="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div class="modal-body">
-                <input type="hidden" id="update-item-name" />
-                <input type="hidden" id="update-item-size" />
-                <div class="mb-3">
-                  <label for="update-item-quantity" class="form-label"
-                    >Quantity</label
-                  >
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="update-item-quantity"
-                    min="0"
-                    required
-                  />
-                </div>
-                <div class="mb-3">
-                  <label for="update-item-price" class="form-label"
-                    >Price</label
-                  >
-                  <input
-                    type="number"
-                    step="0.01"
-                    class="form-control"
-                    id="update-item-price"
-                    min="0"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Update</button>
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  data-bs-dismiss="modal"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+    <!-- Receipt Modal -->
+    <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-body" id="receipt-content"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Hidden video and canvas for user snapshot -->
-    <video id="user-camera" autoplay playsinline style="display: none"></video>
-    <canvas id="snapshot-canvas" style="display: none"></canvas>
-
-    <footer class="bg-primary text-white py-3 mt-auto">
+    <footer class="footer">
       <div class="container">
         <div class="row">
           <div class="col-md-6">
-            <p class="mb-0">&copy; 2023 StockPilot. All rights reserved.</p>
+            <p>&copy; 2023 StockPilot. All rights reserved.</p>
           </div>
-          <div class="col-md-6 text-md-end">
-            <p class="mb-0">Version 1.0.0 | Contact: support@stockpilot.com</p>
+          <div class="col-md-6 text-end">
+            <p>Version 3.5.0 | Contact: support@stockpilot.com</p>
           </div>
         </div>
       </div>
     </footer>
-    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="{% static 'js/storage.js' %}"></script>
     <script type="module" src="{% static 'js/reports.js' %}"></script>

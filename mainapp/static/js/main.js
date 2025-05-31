@@ -182,20 +182,32 @@ function refreshInventoryTable() {
     card.className = "card inventory-card m-2 p-3";
 
     card.innerHTML = `
-      <h5 class="card-title">${item.name}</h5>
-      <img src="${item.image || ""}" alt="${
-      item.name
-    }" class="card-img-top mb-2" style="max-height: 150px; object-fit: contain;" />
-      <p class="card-text"><strong>Size:</strong> ${item.size || ""}</p>
-      <p class="card-text"><strong>Price:</strong> N${item.price.toFixed(2)}</p>
-      <p class="card-text"><strong>Quantity:</strong> ${item.quantity}</p>
-      <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-primary flex-grow-1" onclick="openUpdateModal('${
-          item.name
-        }', '${item.size}', ${item.quantity}, ${item.price})">Update</button>
-        <button class="btn btn-sm btn-danger flex-grow-1" onclick="deleteItem('${
-          item.name
-        }', '${item.size}')">Delete</button>
+      <div class="inventory-card">
+        <img
+          src="${item.image || ''}"
+          alt="${item.name}"
+          style="max-height: 150px; object-fit: contain; width: 100%; margin-bottom: 1rem; border-radius: 8px;"
+        />
+        <h5>${item.name}</h5>
+        <p><strong>Size:</strong> ${item.size || "N/A"}</p>
+        <p><strong>Price:</strong> ₦${item.price.toFixed(2)}</p>
+        <p><strong>Quantity:</strong> ${item.quantity}</p>
+        <div style="margin-top: 1rem;">
+          <button
+            class="btn-primary"
+            style="margin-right: 0.5rem; padding: 0.5rem 1rem;"
+            onclick="openUpdateModal('${item.name}', '${item.size}', ${item.quantity}, ${item.price})"
+          >
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <button
+            class="btn btn-danger"
+            style="padding: 0.5rem 1rem; background: #e53e3e; border: none; border-radius: 8px; color: white;"
+            onclick="deleteItem('${item.name}', '${item.size}')"
+          >
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
       </div>
     `;
 
