@@ -98,6 +98,12 @@ function setupEventListeners() {
   if (saleForm) {
     saleForm.addEventListener("submit", handleAddToCart);
   }
+  const completeSaleBtn = document.getElementById("complete-sale-btn");
+  if (completeSaleBtn) {
+    completeSaleBtn.addEventListener("click", () => {
+      window.completeSale();
+    });
+  }
 }
 
 async function handleAddItem(e) {
@@ -188,11 +194,11 @@ function refreshInventoryTable() {
           alt="${item.name}"
           style="max-height: 150px; object-fit: contain; width: 100%; margin-bottom: 1rem; border-radius: 8px;"
         />
-        <h5>${item.name}</h5>
+        <h5><strong>${item.name}</strong></h5>
         <p><strong>Size:</strong> ${item.size || "N/A"}</p>
         <p><strong>Price:</strong> ₦${item.price.toFixed(2)}</p>
         <p><strong>Quantity:</strong> ${item.quantity}</p>
-        <div style="margin-top: 1rem;">
+        <div style="margin-top: 1rem; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
           <button
             class="btn-primary"
             style="margin-right: 0.5rem; padding: 0.5rem 1rem;"
@@ -437,6 +443,7 @@ window.printReceipt = function () {
 };
 
 window.deleteItem = async function (itemName, size) {
+  console.log("deleteItem called for", itemName, size);
   try {
     const video = document.getElementById("user-camera");
     const canvas = document.getElementById("snapshot-canvas");
@@ -494,9 +501,17 @@ window.deleteItem = async function (itemName, size) {
       refreshInventoryTable();
       refreshSaleItems();
       refreshDeletedItemsTable();
+      console.log("Item deleted:", itemName, size);
     }
   } catch (error) {
-    alert("Camera access denied or error occurred. Cannot confirm delete.");
+    console.warn("Camera access denied or error occurred. Deleting without snapshot.", error);
+    if (confirm("Camera access denied or error occurred. Delete item without snapshot?")) {
+      storage.deleteItem(itemName, size);
+      refreshInventoryTable();
+      refreshSaleItems();
+      refreshDeletedItemsTable();
+      console.log("Item deleted without snapshot:", itemName, size);
+    }
   }
 };
 
@@ -573,18 +588,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.showInventory = function () {
+  localStorage.setItem("currentSection", "inventory");
   document.getElementById("inventory-section").style.display = "block";
   document.getElementById("sales-section").style.display = "none";
   document.getElementById("reports-section").style.display = "none";
 };
 
 window.showSales = function () {
+  localStorage.setItem("currentSection", "sales");
   document.getElementById("inventory-section").style.display = "none";
   document.getElementById("sales-section").style.display = "block";
   document.getElementById("reports-section").style.display = "none";
 };
 
 window.showReports = function () {
+  localStorage.setItem("currentSection", "reports");
   document.getElementById("inventory-section").style.display = "none";
   document.getElementById("sales-section").style.display = "none";
   document.getElementById("reports-section").style.display = "block";
@@ -595,6 +613,18 @@ window.showReports = function () {
     JSON.parse(localStorage.getItem("sales")) || []
   );
 };
+
+// On page load, show the last viewed section or default to inventory
+document.addEventListener("DOMContentLoaded", () => {
+  const currentSection = localStorage.getItem("currentSection") || "inventory";
+  if (currentSection === "inventory") {
+    window.showInventory();
+  } else if (currentSection === "sales") {
+    window.showSales();
+  } else if (currentSection === "reports") {
+    window.showReports();
+  }
+});
 
 function initCharts() {
   const topProductsCtx = document

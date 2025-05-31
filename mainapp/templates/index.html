@@ -40,12 +40,17 @@
               </a>
             </li>
             <li class="nav-item">
-              {% if username %} {% if username == 'developer' %}
+              {% if username %}
+              {% if username == 'developer' %}
               <a class="nav-link" href="{% url 'usage_tracking' %}">
-                <i class="fas fa-user"></i> {{ username }}</a>{% else %}<a class="nav-link" href="{% url 'logout' %}">{{
-                username }} (Logout)
+                <i class="fas fa-user"></i> {{ username }}
               </a>
-              {% endif %} {% endif %}
+              {% else %}
+              <a class="nav-link" href="{% url 'logout' %}">
+                <i class="fas fa-user"></i> {{ username }} (Logout)
+              </a>
+              {% endif %}
+              {% endif %}
             </li>
           </ul>
         </div>
@@ -123,7 +128,7 @@
             </tr>
           </tfoot>
         </table>
-        <button class="btn-success" style="margin-top: 1rem;">
+        <button id="complete-sale-btn" class="btn-success" style="margin-top: 1rem;">
           <i class="fas fa-check-circle"></i>
           Complete Sale
         </button>
