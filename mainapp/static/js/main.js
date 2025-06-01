@@ -521,6 +521,13 @@ function refreshDeletedItemsTable() {
   const tbody = document.querySelector("#deleted-items-table tbody");
   tbody.innerHTML = "";
 
+  if (deletedItems.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="6" style="text-align: center; color: #666;">No deleted items</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+
   deletedItems.forEach((item) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -544,9 +551,7 @@ function refreshDeletedItemsTable() {
 // Initialize deleted items table on page load and when reports section is shown
 document.addEventListener("DOMContentLoaded", () => {
   refreshDeletedItemsTable();
-  const reportsTabButton = document.querySelector(
-    'a.nav-link[href="#reports-section"]'
-  );
+  const reportsTabButton = document.getElementById("reportsTabButton");
   if (reportsTabButton) {
     reportsTabButton.addEventListener("click", () => {
       refreshDeletedItemsTable();
