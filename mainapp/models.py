@@ -19,8 +19,8 @@ class PaymentStatus(models.Model):
         return f"{self.user.username} - {'Paid' if self.paid else 'Not Paid'}"
 
 class UsageStats(models.Model):
-    signups = models.PositiveIntegerField(default=0)
-    logins = models.PositiveIntegerField(default=0)
+    signups = models.IntegerField(default=0)
+    logins = models.IntegerField(default=0)
 
     def __str__(self):
         return f"Signups: {self.signups}, Logins: {self.logins}"
