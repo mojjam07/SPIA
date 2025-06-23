@@ -190,6 +190,19 @@ class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
     def get_queryset(self):
         return StockItem.objects.filter(user=self.request.user)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Log the deleted record
+        from .models import DeletedRecordLog
+        DeletedRecordLog.objects.create(
+            user=request.user,
+            item_name=instance.item_name,
+            size=instance.size,
+            price=instance.price,
+            quantity=instance.quantity
+        )
+        return super().destroy(request, *args, **kwargs)
+
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginAPIView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -246,7 +259,6 @@ class UsageTrackingAPIView(APIView):
         return Response({'users': users_data, 'usage_stats': usage_stats_data}, status=status.HTTP_200_OK)
 
 
-# views.py - Add this to your main app or create a separate health app
 
 from django.http import JsonResponse
 from django.db import connection

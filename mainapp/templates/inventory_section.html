@@ -1,0 +1,24 @@
+<div id="inventory-section" class="section-container">
+  <h2 class="section-title">
+    <i class="fas fa-plus-circle"></i>
+    Stock Entries
+  </h2>
+  <form id="add-item-form" class="add-item-form">
+    <input id="item-name" type="text" class="form-input" placeholder="Item Name" required />
+    <input id="item-size" type="text" class="form-input" placeholder="Size" required />
+    <input id="item-price" type="number" step="0.01" class="form-input" placeholder="Price" required />
+    <input id="item-quantity" type="number" class="form-input" placeholder="Quantity" required />
+    <input id="item-image" type="file" class="form-input" accept="image/*" required />
+    <button type="submit" class="btn-primary">
+      <i class="fas fa-plus"></i>
+      Add Item
+    </button>
+  </form>
+
+  <h3 class="section-title">
+    <i class="fas fa-warehouse"></i>
+    Current Available Stocks
+  </h3>
+  <div id="inventory-cards" class="inventory-cards-container">
+  </div>
+</div>

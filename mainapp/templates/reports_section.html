@@ -1,0 +1,82 @@
+<div id="reports-section" class="section-container" style="display: none;">
+  <h2 class="section-title">
+    <i class="fas fa-chart-line"></i>
+    Analytics & Reports
+  </h2>
+
+  <div class="chart-grid">
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Top Products</h4>
+      <canvas id="topProductsChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Sales Trend</h4>
+      <canvas id="salesTrendChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Daily Sales</h4>
+      <canvas id="dailyChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Revenue Overview</h4>
+      <canvas id="revenueChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Inventory Levels</h4>
+      <canvas id="inventoryChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Weekly Sales</h4>
+      <canvas id="weeklyChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #667eea;">Monthly Sales</h4>
+      <canvas id="monthlyChart"></canvas>
+    </div>
+  </div>
+
+  <div class="section-container">
+    <h3 class="section-title">
+      <i class="fas fa-list"></i>
+      Sales Summary
+    </h3>
+    <table class="modern-table" id="sales-summary-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="4" style="text-align: center; color: #666;">No sales data available</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="section-container" style="margin-top: 2rem;">
+    <h3 class="section-title">
+      <i class="fas fa-list"></i>
+      Deleted Items
+    </h3>
+    <table class="modern-table" id="deleted-items-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Size</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Deleted At</th>
+          <th>Snapshot</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td colspan="6" style="text-align: center; color: #666;">No deleted items</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

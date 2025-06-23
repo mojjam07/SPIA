@@ -1,0 +1,48 @@
+<div id="sales-section" class="section-container" style="display: none;">
+  <h2 class="section-title">
+    <i class="fas fa-shopping-cart"></i>
+    Sales Management
+  </h2>
+  <form id="sale-form" class="add-item-form">
+    <select id="sale-item" class="form-select" required>
+      <option value="">Select an item...</option>
+      <option value="sample">Sample Product - Medium</option>
+    </select>
+    <input id="sale-quantity" type="number" class="form-input" placeholder="Quantity" required min="1" />
+    <button type="submit" class="btn-primary">
+      <i class="fas fa-cart-plus"></i>
+      Add to Cart
+    </button>
+  </form>
+
+  <h3 class="section-title">
+    <i class="fas fa-receipt"></i>
+    Current Cart
+  </h3>
+  <table class="modern-table">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Size</th>
+        <th>Quantity</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody id="cart-items">
+      <tr>
+        <td colspan="5" style="text-align: center; color: #666;">Cart is empty</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr style="background: rgba(102, 126, 234, 0.1); font-weight: bold;">
+        <td colspan="4" style="text-align: right;">Total:</td>
+        <td id="cart-total">₦0.00</td>
+      </tr>
+    </tfoot>
+  </table>
+  <button id="complete-sale-btn" class="btn-success" style="margin-top: 1rem;">
+    <i class="fas fa-check-circle"></i>
+    Complete Sale
+  </button>
+</div>

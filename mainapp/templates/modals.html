@@ -1,0 +1,35 @@
+<!-- Update Item Modal -->
+<div class="modal fade" id="updateItemModal" tabindex="-1" aria-labelledby="updateItemModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="update-item-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="updateItemModalLabel">Update Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input id="update-item-name" type="text" class="form-control" readonly />
+          <input id="update-item-size" type="text" class="form-control" readonly />
+          <input id="update-item-quantity" type="number" class="form-control" min="0" />
+          <input id="update-item-price" type="number" step="0.01" class="form-control" min="0" />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body" id="receipt-content"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" id="printReceiptButton">Print</button>
+      </div>
+    </div>
+  </div>
+</div>

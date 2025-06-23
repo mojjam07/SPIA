@@ -1,18 +1,8 @@
+{% extends "pages.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Login - StockPilot{% endblock %}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login - StockPilot</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="{% static 'access.css' %}" />
-  <link rel="icon" type="image/png" href="{% static 'images/stockpilot.png' %}" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-</head>
-
-<body>
+{% block content %}
   <div class="floating-shapes">
     <div class="shape"></div>
     <div class="shape"></div>
@@ -67,7 +57,8 @@
       Don't have an account? <a href="{% url 'signup' %}">Create one here</a>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+{% endblock %}
 
-</html>
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

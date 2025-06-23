@@ -628,6 +628,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.showSales();
   } else if (currentSection === "reports") {
     window.showReports();
+  } else {
+    // If stored section is unknown, default to inventory
+    window.showInventory();
   }
 });
 
