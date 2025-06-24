@@ -451,27 +451,53 @@ window.showReceipt = function (sale, customerName) {
   const receiptContent = document.getElementById("receipt-content");
   const date = new Date(sale.timestamp);
 
+  // Format receipt as POS receipt style
   let receipt = `
-    STOCKPILOT RECEIPT
-    ------------------------------
-    Customer Name: ${customerName || sale.customerName || "Guest"}
-    Date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
-    ------------------------------
-    
-    Items:
+    <div style="font-family: monospace; max-width: 300px; margin: auto; padding: 10px; border: 1px solid #000;">
+      <div style="text-align: center; font-weight: bold; font-size: 1.2em; margin-bottom: 10px;">
+        STOCKPILOT RECEIPT
+      </div>
+      <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;"></div>
+      <div>
+        <strong>Customer:</strong> ${customerName || sale.customerName || "Guest"}<br/>
+        <strong>Date:</strong> ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
+      </div>
+      <div style="border-bottom: 1px dashed #000; margin: 10px 0;"></div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Item</th>
+            <th style="text-align: center;">Qty</th>
+            <th style="text-align: right;">Price</th>
+            <th style="text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
   `;
 
   sale.items.forEach((item) => {
     receipt += `
-    ${item.name} (Size: ${item.size || "N/A"})
-    ${item.quantity} x N${item.price.toFixed(2)} = N${item.total.toFixed(2)}`;
+          <tr>
+            <td>${item.name} (${item.size || "N/A"})</td>
+            <td style="text-align: center;">${item.quantity}</td>
+            <td style="text-align: right;">₦${item.price.toFixed(2)}</td>
+            <td style="text-align: right;">₦${item.total.toFixed(2)}</td>
+          </tr>
+    `;
   });
 
   receipt += `
-    ------------------------------
-    Total: N${sale.total.toFixed(2)}
-    
-    Thank you for the patronage☺️\n    Hope to see you next time🌾!
+        </tbody>
+      </table>
+      <div style="border-top: 1px dashed #000; margin: 10px 0;"></div>
+      <div style="text-align: right; font-weight: bold; font-size: 1.1em;">
+        Total: ₦${sale.total.toFixed(2)}
+      </div>
+      <div style="margin-top: 20px; text-align: center; font-size: 0.9em;">
+        Thank you for the patronage☺️<br/>
+        Hope to see you next time🌾!
+      </div>
+    </div>
   `;
 
   receiptContent.innerHTML = receipt;
@@ -601,12 +627,17 @@ function refreshDeletedItemsTable() {
   const deletedItems = JSON.parse(localStorage.getItem("deletedItems")) || [];
   tbody.innerHTML = "";
 
+  const clearDeletedBtn = document.getElementById("clearDeletedBtn");
+
   if (deletedItems.length === 0) {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td colspan="6" style="text-align: center; color: #666;">No deleted items</td>`;
     tbody.appendChild(tr);
+    if (clearDeletedBtn) clearDeletedBtn.disabled = true;
     return;
   }
+
+  if (clearDeletedBtn) clearDeletedBtn.disabled = false;
 
   deletedItems.forEach((item) => {
     const tr = document.createElement("tr");
@@ -695,16 +726,22 @@ window.showReports = function () {
 };
 
 // New function to refresh sales summary table with message if empty
+
 function refreshSalesSummaryTable(salesData) {
   const tbody = document.querySelector("#sales-summary-table tbody");
   tbody.innerHTML = "";
+
+  const clearSalesBtn = document.getElementById("clearSalesBtn");
 
   if (salesData.length === 0) {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td colspan="4" style="text-align: center; color: #666;">You don't have a sale summary for now</td>`;
     tbody.appendChild(tr);
+    if (clearSalesBtn) clearSalesBtn.disabled = true;
     return;
   }
+
+  if (clearSalesBtn) clearSalesBtn.disabled = false;
 
   salesData.forEach((sale, index) => {
     const tr = document.createElement("tr");
@@ -713,14 +750,24 @@ function refreshSalesSummaryTable(salesData) {
       <td>${new Date(sale.timestamp).toLocaleString()}</td>
       <td>₦${sale.total.toFixed(2)}</td>
       <td>
-        <button class="btn btn-primary btn-sm" onclick="viewSaleDetails(${index})">View</button>
+        <button class="btn btn-primary btn-sm" onclick="reprintSaleReceipt(${index})">Reprint</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// Dummy function for viewSaleDetails (implement as needed)
+window.reprintSaleReceipt = function (index) {
+  const salesData = JSON.parse(localStorage.getItem("sales")) || [];
+  if (index < 0 || index >= salesData.length) {
+    alert("Invalid sale index.");
+    return;
+  }
+  const sale = salesData[index];
+  const customerName = sale.customerName || "Guest";
+  window.showReceipt(sale, customerName);
+};
+
 window.viewSaleDetails = function (index) {
   alert("View details for sale #" + (index + 1));
 };
