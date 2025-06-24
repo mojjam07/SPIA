@@ -488,10 +488,12 @@ window.completeSale = async function () {
       customerName: customerName,
     };
 
+    const csrftoken = getCookie('csrftoken');
     const response = await fetch("/api/record_sale/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken,
       },
       body: JSON.stringify(saleData),
     });

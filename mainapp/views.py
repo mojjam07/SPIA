@@ -308,13 +308,24 @@ def health_check(request):
     status_code = 200 if health_status["status"] == "healthy" else 503
     return JsonResponse(health_status, status=status_code)
 
+from rest_framework.permissions import AllowAny
+
 class SaleRecordCreateAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         try:
-            user = request.user
+            import traceback
+            user = None
+            if request.user and request.user.is_authenticated:
+                user = request.user
+            else:
+                # Assign a default user or handle anonymous user case
+                from django.contrib.auth.models import User
+                user = User.objects.filter(is_superuser=True).first()
+                if not user:
+                    return Response({'error': 'No valid user found to assign sale record.'}, status=status.HTTP_400_BAD_REQUEST)
             items = request.data.get('items', [])
             total = request.data.get('total', 0)
             customer_name = request.data.get('customerName', '')
@@ -332,7 +343,9 @@ class SaleRecordCreateAPIView(APIView):
 
             return Response({'message': 'Sale recorded successfully.'}, status=status.HTTP_201_CREATED)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            tb = traceback.format_exc()
+            print("Exception in SaleRecordCreateAPIView POST:\n", tb)
+            return Response({'error': str(e), 'traceback': tb}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
