@@ -48,3 +48,13 @@ class DeletedRecordLog(models.Model):
 
     def __str__(self):
         return f"Deleted {self.item_name} ({self.quantity}) by {self.user.username} at {self.deleted_at}"
+
+class SalesRecord(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    items = models.JSONField()
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    timestamp = models.DateTimeField(auto_now_add=True)
+    customer_name = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"Sale by {self.customer_name or self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"

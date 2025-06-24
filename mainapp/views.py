@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view, permission_classes
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import UserProfile, PaymentStatus, UsageStats, StockItem
+from .models import UserProfile, PaymentStatus, UsageStats, StockItem, SalesRecord
 from .serializers import StockItemSerializer
 from rest_framework import generics, permissions
 
@@ -260,10 +260,20 @@ class UsageTrackingAPIView(APIView):
 
 
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db import connection
 from django.conf import settings
 import os
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from django.core.mail import EmailMessage
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+import json
 
 def health_check(request):
     """
@@ -297,3 +307,128 @@ def health_check(request):
     
     status_code = 200 if health_status["status"] == "healthy" else 503
     return JsonResponse(health_status, status=status_code)
+
+class SaleRecordCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+    def post(self, request):
+        try:
+            user = request.user
+            items = request.data.get('items', [])
+            total = request.data.get('total', 0)
+            customer_name = request.data.get('customerName', '')
+
+            if not items or total <= 0:
+                return Response({'error': 'Invalid sale data.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            sales_record = SalesRecord.objects.create(
+                user=user,
+                items=items,
+                total=total,
+                customer_name=customer_name
+            )
+            sales_record.save()
+
+            return Response({'message': 'Sale recorded successfully.'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SendSalesSummaryPDFAPIView(APIView):
+    def post(self, request):
+        try:
+            recipient_email = request.data.get('email')
+            if not recipient_email:
+                return Response({'error': 'Recipient email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            sales_records = SalesRecord.objects.all().order_by('-timestamp')
+
+            # Generate PDF
+            buffer = io.BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+            y = height - 50
+
+            p.setFont("Helvetica-Bold", 16)
+            p.drawCentredString(width / 2, y, "Sales Summary Report")
+            y -= 30
+
+            p.setFont("Helvetica", 12)
+            for i, sale in enumerate(sales_records, start=1):
+                date_str = sale.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                total = sale.total
+                p.drawString(50, y, f"{i}. Date: {date_str}  Total: ₦{total:.2f}")
+                y -= 20
+                if y < 50:
+                    p.showPage()
+                    y = height - 50
+
+            p.showPage()
+            p.save()
+            buffer.seek(0)
+
+            email = EmailMessage(
+                subject="Sales Summary Report",
+                body="Please find attached the sales summary report.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[recipient_email],
+            )
+            email.attach("sales_summary.pdf", buffer.read(), "application/pdf")
+            email.send()
+
+            return Response({'message': 'Sales summary PDF sent successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SendDeletedItemsPDFAPIView(APIView):
+    def post(self, request):
+        try:
+            deleted_items = request.data.get('deletedItems', [])
+            recipient_email = request.data.get('email')
+            if not recipient_email:
+                return Response({'error': 'Recipient email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Generate PDF
+            buffer = io.BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+            y = height - 50
+
+            p.setFont("Helvetica-Bold", 16)
+            p.drawCentredString(width / 2, y, "Deleted Items Report")
+            y -= 30
+
+            p.setFont("Helvetica", 12)
+            for i, item in enumerate(deleted_items, start=1):
+                name = item.get('name', '')
+                size = item.get('size', '')
+                price = item.get('price', 0)
+                quantity = item.get('quantity', 0)
+                deleted_at = item.get('deletedAt', '')[:19].replace('T', ' ')
+                p.drawString(50, y, f"{i}. {name} (Size: {size}) Price: ₦{price:.2f} Qty: {quantity} Deleted At: {deleted_at}")
+                y -= 20
+                if y < 50:
+                    p.showPage()
+                    y = height - 50
+
+            p.showPage()
+            p.save()
+            buffer.seek(0)
+
+            email = EmailMessage(
+                subject="Deleted Items Report",
+                body="Please find attached the deleted items report.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[recipient_email],
+            )
+            email.attach("deleted_items.pdf", buffer.read(), "application/pdf")
+            email.send()
+
+            return Response({'message': 'Deleted items PDF sent successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

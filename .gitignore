@@ -1,33 +1,12 @@
-# Django
-*.log
-*.pot
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
-db.sqlite3
-media/
-staticfiles/
-
-# Virtual environment
-venv/
-.env
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS generated
-.DS_Store
-Thumbs.db
-
-# Node.js
-node_modules/
-npm-debug.log*
-
-# Python
 *.py[cod]
+*$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -41,31 +20,129 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Testing
-.coverage
+# PyInstaller
+#  Usually these files are written by a python script from a template
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
 htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+pipenv.lock
+
+# pytest
+.cache
 .pytest_cache/
 
-# Database
-*.db
-*.sqlite3
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Ignore migrations
-mainapp/migrations/
-project/migrations/
+# Pyre type checker
+.pyre/
 
-# Ignore deployment settings file
-project/deployment_settings.py
+# pytype static type analyzer
+.pytype/
 
-# Ignore Docker environment files
-.env.*
+# Cython debug symbols
+cython_debug/
+
+# VSCode settings
+.vscode/
+
+# macOS
+.DS_Store
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Environment variables
 .env
+.env.*
 
-# Ignore Docker files if you want to exclude them from git
-# Uncomment if needed
-Dockerfile
-docker-compose.yml
+# Coverage reports
+.coverage
+coverage/
+
+# Django media and static files
+media/
+staticfiles/
+
+# Database backups
+*.bak
+*.backup
+
+# Other
+*.swp
+*.swo
+*.tmp
+*.temp
+
+# Ignore project analysis and deployment guides
+project_analysis.txt
+deployment_guide_*.md
+deployment_guide_*.txt
+
+# Ignore render.yaml if it contains sensitive info
+render.yaml

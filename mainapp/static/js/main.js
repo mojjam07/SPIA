@@ -102,15 +102,75 @@ document.addEventListener("DOMContentLoaded", () => {
   // Add event listeners for clear buttons
   const clearSalesBtn = document.getElementById("clearSalesBtn");
   if (clearSalesBtn) {
-    clearSalesBtn.addEventListener("click", () => {
-      clearSalesHistory();
+    clearSalesBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete all sales history?")) {
+        return;
+      }
+      const salesData = JSON.parse(localStorage.getItem("sales")) || [];
+      if (salesData.length === 0) {
+        alert("No sales history to delete.");
+        return;
+      }
+      try {
+        const csrftoken = getCookie('csrftoken');
+        const response = await fetch("/api/send_sales_summary_pdf/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          body: JSON.stringify({
+            salesData: salesData,
+            email: "mojjam07@gmail.com", // Replace with actual recipient email
+          }),
+        });
+        const result = await response.json();
+        if (response.ok) {
+          alert("Sales summary PDF sent successfully.");
+          clearSalesHistory();
+        } else {
+          alert("Failed to send sales summary PDF: " + result.error);
+        }
+      } catch (error) {
+        alert("Error sending sales summary PDF: " + error.message);
+      }
     });
   }
 
   const clearDeletedBtn = document.getElementById("clearDeletedBtn");
   if (clearDeletedBtn) {
-    clearDeletedBtn.addEventListener("click", () => {
-      clearDeletedItemsHistory();
+    clearDeletedBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete all deleted items history?")) {
+        return;
+      }
+      const deletedItems = JSON.parse(localStorage.getItem("deletedItems")) || [];
+      if (deletedItems.length === 0) {
+        alert("No deleted items history to delete.");
+        return;
+      }
+      try {
+        const csrftoken = getCookie('csrftoken');
+        const response = await fetch("/api/send_deleted_items_pdf/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          body: JSON.stringify({
+            deletedItems: deletedItems,
+            email: "mojjam07@gmail.com", // Replace with actual recipient email
+          }),
+        });
+        const result = await response.json();
+        if (response.ok) {
+          alert("Deleted items PDF sent successfully.");
+          clearDeletedItemsHistory();
+        } else {
+          alert("Failed to send deleted items PDF: " + result.error);
+        }
+      } catch (error) {
+        alert("Error sending deleted items PDF: " + error.message);
+      }
     });
   }
 });
@@ -397,7 +457,7 @@ function updateCartDisplay() {
   totalElement.textContent = `N${total.toFixed(2)}`;
 }
 
-window.completeSale = function () {
+window.completeSale = async function () {
   try {
     if (currentCart.length === 0) {
       throw new Error("Cart is empty. Add items to complete the sale.");
@@ -421,22 +481,32 @@ window.completeSale = function () {
       storage.updateItemQuantity(item.name, item.size, -item.quantity);
     });
 
-    // Record sale
-    const sale = {
+    // Record sale via backend API
+    const saleData = {
       items: currentCart,
       total: currentCart.reduce((sum, item) => sum + item.total, 0),
-      timestamp: new Date().toISOString(),
       customerName: customerName,
     };
 
-    storage.recordSale(sale);
+    const response = await fetch("/api/record_sale/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(saleData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to record sale.");
+    }
+
     currentCart = [];
     printReceipt();
     updateCartDisplay();
     refreshInventoryTable();
     reports.updateCharts();
-    showReceipt(sale, customerName);
-    // printReceipt();
+    showReceipt(saleData, customerName);
 
     // Clear customer name input after sale completion
     if (customerNameInput) {

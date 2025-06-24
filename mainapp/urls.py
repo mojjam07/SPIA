@@ -29,4 +29,9 @@ urlpatterns = [
     path('api-token-auth/', drf_views.obtain_auth_token, name='api_token_auth'),
 
     path('health/', views.health_check, name='health_check'),
+
+    path('api/send_sales_summary_pdf/', views.SendSalesSummaryPDFAPIView.as_view(), name='send_sales_summary_pdf'),
+    path('api/send_deleted_items_pdf/', views.SendDeletedItemsPDFAPIView.as_view(), name='send_deleted_items_pdf'),
+
+    path('api/record_sale/', views.SaleRecordCreateAPIView.as_view(), name='record_sale'),
 ]
