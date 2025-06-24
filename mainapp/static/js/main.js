@@ -87,7 +87,51 @@ document.addEventListener("DOMContentLoaded", () => {
       window.printReceipt();
     });
   }
+
+  // Refresh deleted items table on page load
+  refreshDeletedItemsTable();
+
+  // Add event listener to refresh deleted items table when reports tab is clicked
+  const reportsTabButton = document.getElementById("reportsTabButton");
+  if (reportsTabButton) {
+    reportsTabButton.addEventListener("click", () => {
+      refreshDeletedItemsTable();
+    });
+  }
+
+  // Add event listeners for clear buttons
+  const clearSalesBtn = document.getElementById("clearSalesBtn");
+  if (clearSalesBtn) {
+    clearSalesBtn.addEventListener("click", () => {
+      clearSalesHistory();
+    });
+  }
+
+  const clearDeletedBtn = document.getElementById("clearDeletedBtn");
+  if (clearDeletedBtn) {
+    clearDeletedBtn.addEventListener("click", () => {
+      clearDeletedItemsHistory();
+    });
+  }
 });
+
+// Clear sales history and refresh sales summary table
+function clearSalesHistory() {
+  if (confirm("Are you sure you want to delete all sales history?")) {
+    localStorage.removeItem("sales");
+    reports.updateSalesSummaryTable([]);
+    alert("Sales history cleared.");
+  }
+}
+
+// Clear deleted items history and refresh deleted items table
+function clearDeletedItemsHistory() {
+  if (confirm("Are you sure you want to delete all deleted items history?")) {
+    localStorage.removeItem("deletedItems");
+    refreshDeletedItemsTable();
+    alert("Deleted items history cleared.");
+  }
+}
 
 function setupEventListeners() {
   const addItemForm = document.getElementById("add-item-form");
@@ -182,6 +226,16 @@ function refreshInventoryTable() {
   const items = storage.getItems();
   const container = document.getElementById("inventory-cards");
   container.innerHTML = "";
+
+  if (items.length === 0) {
+    const message = document.createElement("p");
+    message.textContent = "You don't have any available stock in your store";
+    message.style.textAlign = "center";
+    message.style.color = "#666";
+    message.style.fontSize = "1.2rem";
+    container.appendChild(message);
+    return;
+  }
 
   items.forEach((item) => {
     const card = document.createElement("div");
@@ -442,83 +496,109 @@ window.printReceipt = function () {
   window.print();
 };
 
+// Fixed deleteItem function with better error handling and flow
 window.deleteItem = async function (itemName, size) {
   console.log("deleteItem called for", itemName, size);
+  
+  // First confirm deletion
+  if (!confirm("Are you sure you want to delete this item?")) {
+    return;
+  }
+
+  // Get the item data before deletion
+  const items = storage.getItems();
+  const itemToDelete = items.find((i) => i.name === itemName && i.size === size);
+  
+  if (!itemToDelete) {
+    alert("Item not found.");
+    return;
+  }
+
+  let imageDataUrl = null;
+
+  // Try to capture camera snapshot (optional)
   try {
     const video = document.getElementById("user-camera");
     const canvas = document.getElementById("snapshot-canvas");
-    const context = canvas.getContext("2d");
+    
+    if (video && canvas) {
+      const context = canvas.getContext("2d");
 
-    // Request access to front camera
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-      audio: false,
-    });
+      // Request access to front camera
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false,
+      });
 
-    video.srcObject = stream;
-    video.style.display = "block";
+      video.srcObject = stream;
+      video.style.display = "block";
 
-    // Wait for video to be ready
-    await new Promise((resolve) => {
-      video.onloadedmetadata = () => {
-        resolve();
-      };
-    });
+      // Wait for video to be ready
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          resolve();
+        };
+      });
 
-    // Set canvas size to video size
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+      // Set canvas size to video size
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    // Draw current frame to canvas
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Draw current frame to canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Get image data URL (base64)
-    const imageDataUrl = canvas.toDataURL("image/png");
+      // Get image data URL (base64)
+      imageDataUrl = canvas.toDataURL("image/png");
 
-    // Stop video stream
-    stream.getTracks().forEach((track) => track.stop());
-    video.style.display = "none";
+      // Stop video stream
+      stream.getTracks().forEach((track) => track.stop());
+      video.style.display = "none";
+    }
+  } catch (error) {
+    console.warn("Camera access denied or error occurred:", error);
+    // Continue with deletion even if camera fails
+  }
 
+  try {
     // Save deleted item record with timestamp
     const deletedItems = JSON.parse(localStorage.getItem("deletedItems")) || [];
     const timestamp = new Date().toISOString();
-    const items = storage.getItems();
-    const deletedItem = items.find(
-      (i) => i.name === itemName && i.size === size
-    );
-    if (deletedItem) {
-      deletedItems.push({
-        ...deletedItem,
-        deletedAt: timestamp,
-        snapshot: imageDataUrl,
-      });
-      localStorage.setItem("deletedItems", JSON.stringify(deletedItems));
-    }
+    
+    deletedItems.push({
+      ...itemToDelete,
+      deletedAt: timestamp,
+      snapshot: imageDataUrl,
+    });
+    
+    localStorage.setItem("deletedItems", JSON.stringify(deletedItems));
 
-    // Confirm deletion
-    if (confirm("Are you sure you want to delete this item?")) {
-      storage.deleteItem(itemName, size);
-      refreshInventoryTable();
-      refreshSaleItems();
-      refreshDeletedItemsTable();
-      console.log("Item deleted:", itemName, size);
-    }
+    // Delete the item from inventory
+    storage.deleteItem(itemName, size);
+    
+    // Refresh all relevant displays
+    refreshInventoryTable();
+    refreshSaleItems();
+    refreshDeletedItemsTable();
+    
+    console.log("Item deleted successfully:", itemName, size);
+    alert("Item deleted successfully!");
+    
   } catch (error) {
-    console.warn("Camera access denied or error occurred. Deleting without snapshot.", error);
-    if (confirm("Camera access denied or error occurred. Delete item without snapshot?")) {
-      storage.deleteItem(itemName, size);
-      refreshInventoryTable();
-      refreshSaleItems();
-      refreshDeletedItemsTable();
-      console.log("Item deleted without snapshot:", itemName, size);
-    }
+    console.error("Error deleting item:", error);
+    alert("Error occurred while deleting item: " + error.message);
   }
 };
 
 // Function to refresh deleted items table in reports section
 function refreshDeletedItemsTable() {
-  const deletedItems = JSON.parse(localStorage.getItem("deletedItems")) || [];
   const tbody = document.querySelector("#deleted-items-table tbody");
+  
+  if (!tbody) {
+    console.warn("Deleted items table body not found");
+    return;
+  }
+
+  const deletedItems = JSON.parse(localStorage.getItem("deletedItems")) || [];
   tbody.innerHTML = "";
 
   if (deletedItems.length === 0) {
@@ -532,32 +612,23 @@ function refreshDeletedItemsTable() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${item.name}</td>
-      <td>${item.size || ""}</td>
-      <td>N${item.price.toFixed(2)}</td>
+      <td>${item.size || "N/A"}</td>
+      <td>₦${item.price.toFixed(2)}</td>
       <td>${item.quantity}</td>
       <td>${new Date(item.deletedAt).toLocaleString()}</td>
       <td>
         ${
           item.snapshot
-            ? `<img src="${item.snapshot}" alt="Snapshot" style="max-width: 100px; max-height: 80px; cursor: pointer;" onclick="window.open('${item.snapshot}', '_blank')" />`
-            : "No snapshot"
+            ? `<img src="${item.snapshot}" alt="Snapshot" style="max-width: 100px; max-height: 80px; cursor: pointer; border-radius: 4px;" onclick="window.open('${item.snapshot}', '_blank')" title="Click to view full size" />`
+            : "<span style='color: #666; font-style: italic;'>No snapshot</span>"
         }
       </td>
     `;
     tbody.appendChild(tr);
   });
-}
 
-// Initialize deleted items table on page load and when reports section is shown
-document.addEventListener("DOMContentLoaded", () => {
-  refreshDeletedItemsTable();
-  const reportsTabButton = document.getElementById("reportsTabButton");
-  if (reportsTabButton) {
-    reportsTabButton.addEventListener("click", () => {
-      refreshDeletedItemsTable();
-    });
-  }
-});
+  console.log(`Refreshed deleted items table with ${deletedItems.length} items`);
+}
 
 // Send deleted items report via email using mailto link
 document.addEventListener("DOMContentLoaded", () => {
@@ -574,8 +645,8 @@ document.addEventListener("DOMContentLoaded", () => {
       let emailBody = "Deleted Items Report:%0D%0A%0D%0A";
       deletedItems.forEach((item, index) => {
         emailBody += `${index + 1}. Name: ${item.name}, Size: ${
-          item.size || ""
-        }, Price: N${item.price.toFixed(2)}, Quantity: ${
+          item.size || "N/A"
+        }, Price: ₦${item.price.toFixed(2)}, Quantity: ${
           item.quantity
         }, Deleted At: ${new Date(item.deletedAt).toLocaleString()}%0D%0A`;
       });
@@ -585,9 +656,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const body = encodeURIComponent(emailBody);
 
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-      // Clear deleted items after sending email
-      localStorage.removeItem("deletedItems");
-      refreshDeletedItemsTable();
+      
+      // Ask user if they want to clear deleted items after sending email
+      if (confirm("Email opened successfully. Clear deleted items from local storage?")) {
+        localStorage.removeItem("deletedItems");
+        refreshDeletedItemsTable();
+      }
     });
   }
 });
@@ -612,11 +686,43 @@ window.showReports = function () {
   document.getElementById("sales-section").style.display = "none";
   document.getElementById("reports-section").style.display = "block";
 
+  refreshDeletedItemsTable();
+
   initCharts();
   reports.updateCharts();
-  reports.updateSalesSummaryTable(
-    JSON.parse(localStorage.getItem("sales")) || []
-  );
+  const salesData = JSON.parse(localStorage.getItem("sales")) || [];
+  refreshSalesSummaryTable(salesData);
+};
+
+// New function to refresh sales summary table with message if empty
+function refreshSalesSummaryTable(salesData) {
+  const tbody = document.querySelector("#sales-summary-table tbody");
+  tbody.innerHTML = "";
+
+  if (salesData.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="4" style="text-align: center; color: #666;">You don't have a sale summary for now</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+
+  salesData.forEach((sale, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${new Date(sale.timestamp).toLocaleString()}</td>
+      <td>₦${sale.total.toFixed(2)}</td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="viewSaleDetails(${index})">View</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Dummy function for viewSaleDetails (implement as needed)
+window.viewSaleDetails = function (index) {
+  alert("View details for sale #" + (index + 1));
 };
 
 // On page load, show the last viewed section or default to inventory

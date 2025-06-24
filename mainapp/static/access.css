@@ -803,6 +803,22 @@ body.other-page {
 
 /* ===== RESPONSIVE DESIGN ===== */
 
+.section-title.d-flex {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.section-title.d-flex > span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-danger {
+    color: white !important;
+}
+
 /* Large Desktop (1440px+) */
 @media (min-width: 1440px) {
     .hero-card {
