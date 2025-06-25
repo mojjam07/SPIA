@@ -9,6 +9,9 @@
       <p class="mb-4">Please complete your payment to gain full access.</p>
       <form method="post" action="{% url 'payment' %}">
         {% csrf_token %}
+
+        <div id="payment-messages"></div>
+
         <!-- Placeholder for payment details -->
         <div class="mb-3 text-start">
           <label for="card-number" class="form-label">Card Number</label>

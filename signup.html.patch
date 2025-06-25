@@ -1,0 +1,22 @@
+{% if messages %}
+    <div>
+      {% for message in messages %}
+      <div class="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post">
+=======
+    <!-- Django messages would go here -->
+    {% if messages %}
+    <div>
+      {% for message in messages %}
+      <div class="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div id="signup-messages"></div>
+
+    <form id="signup-form" method="post">

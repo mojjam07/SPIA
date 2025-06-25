@@ -28,7 +28,9 @@
     </div>
     {% endif %}
 
-    <form method="post">
+    <div id="signup-messages"></div>
+
+    <form id="signup-form" method="post">
       {% csrf_token %}
       <div class="form-grid">
         <div class="form-row">
