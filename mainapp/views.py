@@ -26,6 +26,7 @@ from django.utils.timezone import now
 from django.core.mail import EmailMessage
 
 # Django REST Framework Imports
+import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, authentication, generics
@@ -34,6 +35,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from .authentication import CookieTokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
+logger = logging.getLogger(__name__)
 
 # Local Model and Serializer Imports
 from .models import (
@@ -72,6 +75,20 @@ def increment_signup():
     usage_stats_obj, created = UsageStats.objects.get_or_create(id=1)
     usage_stats_obj.signups += 1
     usage_stats_obj.save()
+
+def is_authenticated(request):
+    """
+    Improved authentication check using token from cookies.
+    Used for frontend authentication validation.
+    """
+    token_key = request.COOKIES.get('auth_token')
+    if not token_key:
+        return False
+    try:
+        token = Token.objects.get(key=token_key)
+        return True
+    except Token.DoesNotExist:
+        return False
 
 @receiver(user_logged_in)
 def increment_login(sender, request, user, **kwargs):
@@ -142,35 +159,6 @@ def signup(request):
         return redirect('payment')
     
     return render(request, 'signup.html')
-
-def login(request):
-    """
-    Handles user authentication.
-    
-    GET: Displays the login form
-    POST: Authenticates user credentials and redirects to main interface
-    
-    Features:
-    - Username/password authentication
-    - Special handling for developer account
-    - Error messaging for invalid credentials
-    """
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        # Authenticate user credentials
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            auth_login(request, user)
-            # Both developer and regular users redirect to index
-            return redirect('index')
-        else:
-            messages.error(request, 'Invalid username or password.')
-            return redirect('login')
-    
-    return render(request, 'login.html')
 
 def payment(request):
     """
@@ -425,6 +413,7 @@ class PaymentAPIView(APIView):
     POST /api/payment/
     - Processes payment for authenticated user
     - Updates payment status in database
+    - Includes improved authentication checks and logging
     
     Requires: Token authentication
     """
@@ -432,6 +421,10 @@ class PaymentAPIView(APIView):
     authentication_classes = [CookieTokenAuthentication]
 
     def post(self, request):
+        if not request.user or not request.user.is_authenticated:
+            logger.warning(f"PaymentAPIView: Unauthenticated access attempt from IP {request.META.get('REMOTE_ADDR')}")
+            return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        
         # TODO: Implement actual payment processing
         # For now, assume payment is successful
         payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
@@ -458,16 +451,23 @@ class StockItemListCreateAPIView(generics.ListCreateAPIView):
     - User-specific stock items (users only see their own items)
     - Token-based authentication required
     - Automatic user assignment on creation
+    - Improved authentication checks and logging
     """
     authentication_classes = [CookieTokenAuthentication]
     serializer_class = StockItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if not self.request.user or not self.request.user.is_authenticated:
+            logger.warning(f"StockItemListCreateAPIView: Unauthenticated access attempt from IP {self.request.META.get('REMOTE_ADDR')}")
+            return StockItem.objects.none()
         """Return only stock items belonging to the current user."""
         return StockItem.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
+        if not self.request.user or not self.request.user.is_authenticated:
+            logger.warning(f"StockItemListCreateAPIView: Unauthenticated create attempt from IP {self.request.META.get('REMOTE_ADDR')}")
+            raise PermissionError("User not authenticated")
         """Automatically assign the current user to new stock items."""
         serializer.save(user=self.request.user)
 
@@ -521,6 +521,7 @@ class SaleRecordCreateAPIView(APIView):
     - Records new sales transaction
     - Handles both authenticated and anonymous sales
     - Stores detailed transaction information
+    - Improved error handling and logging
     
     Request Body:
     {
@@ -576,7 +577,7 @@ class SaleRecordCreateAPIView(APIView):
         except Exception as e:
             # Log full traceback for debugging
             tb = traceback.format_exc()
-            print("Exception in SaleRecordCreateAPIView POST:\n", tb)
+            logger.error(f"Exception in SaleRecordCreateAPIView POST: {str(e)}\n{tb}")
             return Response(
                 {'error': str(e), 'traceback': tb}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -807,6 +808,43 @@ class SendDeletedItemsPDFAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# ============================================================================
-# END OF FILE
-# ============================================================================
+def login(request):
+    """
+    Handles user authentication.
+    
+    GET: Displays the login form
+    POST: Authenticates user credentials and redirects to main interface
+    
+    Features:
+    - Username/password authentication
+    - Special handling for developer account
+    - Error messaging for invalid credentials
+    """
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        # Authenticate user credentials
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            auth_login(request, user)
+            # Create or retrieve authentication token
+            token, created = Token.objects.get_or_create(user=user)
+            response = redirect('index')
+            # Set token in HTTP-only cookie
+            response.set_cookie(
+                key='auth_token',
+                value=token.key,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite='Lax',
+                max_age=60*60*24*7,  # 7 days
+                path='/',
+            )
+            return response
+        else:
+            messages.error(request, 'Invalid username or password.')
+            return redirect('login')
+    
+    return render(request, 'login.html')

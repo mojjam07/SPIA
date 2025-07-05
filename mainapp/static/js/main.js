@@ -1,7 +1,41 @@
+// Get CSRF token from cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Get CSRF token
+const csrftoken = getCookie('csrftoken');
+
 // Helper function to check authentication consistently
 function isAuthenticated() {
-    // Check only cookies for auth token since we use cookie-based auth
-    return document.cookie.includes('auth_token=');
+    // Check if auth_token cookie exists
+    const authToken = getCookie('auth_token');
+    return authToken !== null && authToken !== '';
+}
+
+// Helper function to verify authentication with server
+async function verifyAuthentication() {
+    try {
+        const response = await fetch('/api/verify-auth/', {
+            method: 'GET',
+            credentials: 'include',
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Error verifying authentication:', error);
+        return false;
+    }
 }
 
 // Inventory Section: Add stock item with image upload
@@ -9,18 +43,28 @@ const addItemForm = document.getElementById('add-item-form');
 if (addItemForm) {
     addItemForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Check authentication first
+        if (!isAuthenticated()) {
+            alert('You must be logged in to add items.');
+            window.location.href = '/login/';
+            return;
+        }
+
+        // Verify authentication with server
+        const isAuthValid = await verifyAuthentication();
+        if (!isAuthValid) {
+            alert('Your session has expired. Please log in again.');
+            window.location.href = '/login/';
+            return;
+        }
+
         const item_name = document.getElementById('item-name').value.trim();
         const size = document.getElementById('item-size').value.trim();
         const price = parseFloat(document.getElementById('item-price').value);
         const quantity = parseInt(document.getElementById('item-quantity').value);
         const imageInput = document.getElementById('item-image');
         const imageFile = imageInput.files[0];
-
-        // Check authentication consistently
-        if (!isAuthenticated()) {
-            alert('You must be logged in to add items.');
-            return;
-        }
 
         const formData = new FormData();
         formData.append('item_name', item_name);
@@ -40,6 +84,13 @@ if (addItemForm) {
                 credentials: 'include',
                 body: formData,
             });
+            
+            if (response.status === 401 || response.status === 403) {
+                alert('Authentication failed. Please log in again.');
+                window.location.href = '/login/';
+                return;
+            }
+            
             const data = await response.json();
             if (response.ok) {
                 alert('Item added successfully.');
@@ -49,26 +100,26 @@ if (addItemForm) {
                 alert('Failed to add item: ' + (data.error || 'Unknown error'));
             }
         } catch (error) {
-            alert('Error adding item: ' + error);
+            console.error('Error adding item:', error);
+            alert('Error adding item: ' + error.message);
         }
     });
 }
 
 // Fetch and display stock items
-
 async function fetchStockItems() {
     if (!isAuthenticated()) {
         console.log('User not authenticated');
-        // Instead of just returning, show a message or redirect to login
         const container = document.getElementById('inventory-cards');
         if (container) {
-            container.innerHTML = '<p>Please log in to view inventory items.</p>';
+            container.innerHTML = '<p>Please <a href="/login/">log in</a> to view inventory items.</p>';
         }
         return;
     }
     
     try {
         const response = await fetch('/api/stockitems/', {
+            method: 'GET',
             credentials: 'include',
         });
         
@@ -76,17 +127,24 @@ async function fetchStockItems() {
             const data = await response.json();
             displayStockItems(data);
         } else if (response.status === 401 || response.status === 403) {
-            // Handle authentication errors
             console.error('Authentication failed');
             const container = document.getElementById('inventory-cards');
             if (container) {
-                container.innerHTML = '<p>Authentication expired. Please log in again.</p>';
+                container.innerHTML = '<p>Authentication expired. Please <a href="/login/">log in again</a>.</p>';
             }
         } else {
             console.error('Failed to fetch stock items');
+            const container = document.getElementById('inventory-cards');
+            if (container) {
+                container.innerHTML = '<p>Error loading inventory items.</p>';
+            }
         }
     } catch (error) {
         console.error('Error fetching stock items:', error);
+        const container = document.getElementById('inventory-cards');
+        if (container) {
+            container.innerHTML = '<p>Error loading inventory items.</p>';
+        }
     }
 }
 
@@ -94,11 +152,14 @@ async function fetchStockItems() {
 function displayStockItems(items) {
     const container = document.getElementById('inventory-cards');
     if (!container) return;
+    
     container.innerHTML = '';
+    
     if (items.length === 0) {
-        container.textContent = 'No stock items found.';
+        container.innerHTML = '<p style="text-align: center; color: #666;">No stock items found.</p>';
         return;
     }
+    
     items.forEach(item => {
         const card = document.createElement('div');
         card.className = 'inventory-card';
@@ -107,7 +168,7 @@ function displayStockItems(items) {
             <div class="inventory-card-details">
                 <h4>${item.item_name}</h4>
                 <p>Size: ${item.size}</p>
-                <p>Price: ₦${item.price.toFixed(2)}</p>
+                <p>Price: ₦${item.price}</p>
                 <p>Quantity: ${item.quantity}</p>
                 <button class="btn btn-sm btn-danger" onclick="deleteStockItem(${item.id})">Delete</button>
             </div>
@@ -120,6 +181,7 @@ function displayStockItems(items) {
 async function deleteStockItem(id) {
     if (!isAuthenticated()) {
         alert('You must be logged in to delete items.');
+        window.location.href = '/login/';
         return;
     }
     
@@ -139,11 +201,13 @@ async function deleteStockItem(id) {
             fetchStockItems();
         } else if (response.status === 401 || response.status === 403) {
             alert('Authentication failed. Please log in again.');
+            window.location.href = '/login/';
         } else {
             alert('Failed to delete item.');
         }
     } catch (error) {
-        alert('Error deleting item: ' + error);
+        console.error('Error deleting item:', error);
+        alert('Error deleting item: ' + error.message);
     }
 }
 
@@ -181,24 +245,66 @@ function updateCartDisplay() {
     cartTotalDisplay.textContent = `₦${total.toFixed(2)}`;
 }
 
+// Load available items for sale
+async function loadSaleItems() {
+    if (!isAuthenticated()) return;
+    
+    try {
+        const response = await fetch('/api/stockitems/', {
+            method: 'GET',
+            credentials: 'include',
+        });
+        
+        if (response.ok) {
+            const items = await response.json();
+            const saleItemSelect = document.getElementById('sale-item');
+            if (saleItemSelect) {
+                saleItemSelect.innerHTML = '<option value="">Select an item...</option>';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = `${item.item_name} - ${item.size} (₦${item.price}) - Stock: ${item.quantity}`;
+                    option.dataset.price = item.price;
+                    option.dataset.name = item.item_name;
+                    option.dataset.size = item.size;
+                    option.dataset.stock = item.quantity;
+                    saleItemSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading sale items:', error);
+    }
+}
+
 if (saleForm) {
     saleForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const saleItemSelect = document.getElementById('sale-item');
         const quantityInput = document.getElementById('sale-quantity');
         const selectedOption = saleItemSelect.options[saleItemSelect.selectedIndex];
-        if (!selectedOption || !quantityInput.value) {
+        
+        if (!selectedOption || !selectedOption.value || !quantityInput.value) {
             alert('Please select an item and enter quantity.');
             return;
         }
-        const item_name = selectedOption.text;
-        const size = 'N/A'; // Size info not in select options, could be improved
-        const price = 0; // Price info not in select options, could be improved
+        
+        const item_name = selectedOption.dataset.name;
+        const size = selectedOption.dataset.size;
+        const price = parseFloat(selectedOption.dataset.price);
         const quantity = parseInt(quantityInput.value);
+        const availableStock = parseInt(selectedOption.dataset.stock);
+        
         if (quantity <= 0) {
             alert('Quantity must be positive.');
             return;
         }
+        
+        if (quantity > availableStock) {
+            alert(`Only ${availableStock} items available in stock.`);
+            return;
+        }
+        
         // Add to cart
         cart.push({ item_name, size, price, quantity });
         updateCartDisplay();
@@ -212,6 +318,7 @@ if (completeSaleBtn) {
     completeSaleBtn.addEventListener('click', async () => {
         if (!isAuthenticated()) {
             alert('You must be logged in to complete sales.');
+            window.location.href = '/login/';
             return;
         }
         
@@ -233,26 +340,38 @@ if (completeSaleBtn) {
                 credentials: 'include',
                 body: JSON.stringify({ items: cart, total, customerName }),
             });
+            
+            if (response.status === 401 || response.status === 403) {
+                alert('Authentication failed. Please log in again.');
+                window.location.href = '/login/';
+                return;
+            }
+            
             const data = await response.json();
             if (response.ok) {
                 alert('Sale recorded successfully.');
                 cart = [];
                 updateCartDisplay();
-            } else if (response.status === 401 || response.status === 403) {
-                alert('Authentication failed. Please log in again.');
+                // Refresh stock items to update quantities
+                fetchStockItems();
+                loadSaleItems();
             } else {
                 alert('Failed to record sale: ' + (data.error || 'Unknown error'));
             }
         } catch (error) {
-            alert('Error recording sale: ' + error);
+            console.error('Error recording sale:', error);
+            alert('Error recording sale: ' + error.message);
         }
     });
 }
 
-// On page load, fetch stock items if inventory section is present
+// On page load, fetch stock items and load sale items
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('inventory-cards')) {
         fetchStockItems();
+    }
+    if (document.getElementById('sale-item')) {
+        loadSaleItems();
     }
 });
 
@@ -262,6 +381,7 @@ function showInventory(event) {
     document.getElementById('inventory-section').style.display = 'block';
     document.getElementById('sales-section').style.display = 'none';
     document.getElementById('reports-section').style.display = 'none';
+    fetchStockItems();
 }
 
 function showSales(event) {
@@ -269,6 +389,7 @@ function showSales(event) {
     document.getElementById('inventory-section').style.display = 'none';
     document.getElementById('sales-section').style.display = 'block';
     document.getElementById('reports-section').style.display = 'none';
+    loadSaleItems();
 }
 
 function showReports(event) {
