@@ -1,4 +1,5 @@
 {% extends "pages.html" %}
+{% load custom_tags %}
 
 {% block title %}Usage Tracking - StockPilot{% endblock %}
 
@@ -49,6 +50,8 @@
               <th><i class="fas fa-user-tie"></i> Staff</th>
               <th><i class="fas fa-crown"></i> Superuser</th>
               <th><i class="fas fa-credit-card"></i> Paid</th>
+              <th><i class="fas fa-calendar-alt"></i> Subscription Plan</th>
+              <th><i class="fas fa-hourglass-half"></i> Subscription Expiry</th>
             </tr>
           </thead>
           <tbody>
@@ -86,10 +89,32 @@
                 <span class="status-badge">No</span>
                 {% endif %}
               </td>
+              <td>
+                {% with ps=payment_status|get_item:user.username %}
+                  {% if ps %}
+                    <span class="status-badge">{{ ps.subscription_plan|default:"N/A" }}</span>
+                  {% else %}
+                    <span class="status-badge">N/A</span>
+                  {% endif %}
+                {% endwith %}
+              </td>
+              <td>
+                {% with ps=payment_status|get_item:user.username %}
+                  {% if ps and ps.subscription_expiry %}
+                    {% if ps.subscription_expiry < now %}
+                      <span class="status-badge status-inactive">Expired</span>
+                    {% else %}
+                      <span class="status-badge status-active">{{ ps.subscription_expiry|date:"M d, Y" }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="status-badge">N/A</span>
+                  {% endif %}
+                {% endwith %}
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="8" class="empty-state">
+              <td colspan="10" class="empty-state">
                 <i class="fas fa-users empty-icon"></i>
                 <div>No users found.</div>
               </td>

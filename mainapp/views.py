@@ -36,6 +36,8 @@ from rest_framework.authentication import TokenAuthentication
 from .authentication import CookieTokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+import stripe
+
 logger = logging.getLogger(__name__)
 
 # Local Model and Serializer Imports
@@ -66,6 +68,55 @@ def create_default_developer_user():
     password = 'developerpassword'
     if not User.objects.filter(username=username).exists():
         User.objects.create_user(username=username, password=password)
+
+def create_default_users():
+    """
+    Creates default users with paid status and active subscriptions.
+    """
+    from datetime import datetime, timedelta
+    default_users = [
+        {
+            'username': 'user1',
+            'password': 'password1',
+            'email': 'user1@example.com',
+            'full_name': 'User One',
+            'subscription_plan': '1_year',
+            'subscription_expiry': datetime.now() + timedelta(days=365),
+            'paid': True,
+        },
+        {
+            'username': 'user2',
+            'password': 'password2',
+            'email': 'user2@example.com',
+            'full_name': 'User Two',
+            'subscription_plan': '6_month',
+            'subscription_expiry': datetime.now() + timedelta(days=180),
+            'paid': True,
+        },
+        {
+            'username': 'user3',
+            'password': 'password3',
+            'email': 'user3@example.com',
+            'full_name': 'User Three',
+            'subscription_plan': '1_month',
+            'subscription_expiry': datetime.now() + timedelta(days=30),
+            'paid': True,
+        },
+    ]
+
+    for user_data in default_users:
+        user, created = User.objects.get_or_create(username=user_data['username'])
+        if created:
+            user.set_password(user_data['password'])
+            user.email = user_data['email']
+            user.first_name = user_data['full_name']
+            user.save()
+            UserProfile.objects.create(user=user, full_name=user_data['full_name'])
+        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=user)
+        payment_status_obj.paid = user_data['paid']
+        payment_status_obj.subscription_plan = user_data['subscription_plan']
+        payment_status_obj.subscription_expiry = user_data['subscription_expiry']
+        payment_status_obj.save()
 
 def increment_signup():
     """
@@ -154,6 +205,17 @@ def signup(request):
         # Update usage statistics
         increment_signup()
         
+        # Authenticate and log the user in
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            auth_login(request, user)
+        
+        # If the user is 'developer', automatically authenticate without password
+        if username == 'developer':
+            developer_user = User.objects.filter(username='developer').first()
+            if developer_user:
+                auth_login(request, developer_user)
+        
         # Redirect to payment page
         messages.success(request, 'Signup successful. Please complete payment.')
         return redirect('payment')
@@ -162,26 +224,74 @@ def signup(request):
 
 def payment(request):
     """
-    Handles payment processing for user accounts.
+    Handles payment processing for user accounts in Nigerian Naira (₦).
     
     Requires user authentication.
-    POST: Marks user as paid (payment processing would be implemented here)
+    POST: Processes Stripe payment and marks user as paid
     
-    Note: This is a simplified implementation. Real payment processing
-    would integrate with payment gateways like Stripe, PayPal, etc.
+    Integrates Stripe payment gateway.
     """
     if not request.user.is_authenticated:
         return redirect('login')
     
-    if request.method == 'POST':
-        # TODO: Implement actual payment processing logic
-        # For now, assume payment is successful
-        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
-        payment_status_obj.paid = True
-        payment_status_obj.save()
-        return redirect('index')
+    stripe.api_key = settings.STRIPE_SECRET_KEY
     
-    return render(request, 'payment.html')
+    subscription_plan = '1_month'  # default plan
+    if request.method == 'POST':
+        # Get the payment token ID submitted by the form
+        token = request.POST.get('stripeToken')
+        subscription_plan = request.POST.get('subscription_plan', '1_month')
+        
+        # Set amount and expiry based on subscription plan
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        
+        if subscription_plan == '1_month':
+            amount_naira = 5000
+            expiry = now + timedelta(days=30)
+        elif subscription_plan == '6_month':
+            amount_naira = 27000
+            expiry = now + timedelta(days=180)
+        elif subscription_plan == '1_year':
+            amount_naira = 50000
+            expiry = now + timedelta(days=365)
+        else:
+            amount_naira = 5000  # fallback to 1 month
+            expiry = now + timedelta(days=30)
+        
+        amount_kobo = amount_naira * 100  # Stripe requires amount in Kobo
+        
+        try:
+            # Create a charge: this will charge the user's card
+            charge = stripe.Charge.create(
+                amount=amount_kobo,
+                currency='ngn',
+                description=f'Payment for user {request.user.username} - {subscription_plan}',
+                source=token,
+            )
+            
+            # Mark payment as successful and save subscription info
+            payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
+            payment_status_obj.paid = True
+            payment_status_obj.subscription_plan = subscription_plan
+            payment_status_obj.subscription_expiry = expiry
+            payment_status_obj.save()
+            
+            messages.success(request, 'Payment successful.')
+            return redirect('index')
+        
+        except stripe.error.CardError as e:
+            messages.error(request, f'Card error: {e.user_message}')
+        except stripe.error.StripeError as e:
+            messages.error(request, 'Payment processing error. Please try again.')
+        except Exception as e:
+            messages.error(request, f'An error occurred: {str(e)}')
+    
+    return render(request, 'payment.html', {
+        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+        'subscription_plan': subscription_plan,
+    })
+
 
 def logout(request):
     """
@@ -209,6 +319,7 @@ def usage_tracking(request):
     - List of all registered users
     - Payment status for each user
     - User registration dates
+    - Subscription plan and expiry
     """
     # Restrict access to developer account only
     if request.user.username != 'developer':
@@ -217,7 +328,7 @@ def usage_tracking(request):
     # Fetch all users and their payment status
     users = User.objects.all().order_by('date_joined')
     payment_status_qs = PaymentStatus.objects.all()
-    payment_status_dict = {ps.user.username: ps.paid for ps in payment_status_qs}
+    payment_status_dict = {ps.user.username: ps for ps in payment_status_qs}
     
     return render(request, 'usage_tracking.html', {
         'users': users, 
@@ -385,7 +496,10 @@ class LoginAPIView(APIView):
             # Create or retrieve authentication token
             token, created = Token.objects.get_or_create(user=user)
             response = Response(
-                {'message': 'Login successful.'}, 
+                {
+                    'message': 'Login successful.',
+                    'redirect_url': '/index/'  # Add redirect URL for frontend handling
+                }, 
                 status=status.HTTP_200_OK
             )
             # Set token in HTTP-only cookie
@@ -411,7 +525,7 @@ class PaymentAPIView(APIView):
     API endpoint for payment processing.
     
     POST /api/payment/
-    - Processes payment for authenticated user
+    - Processes Stripe payment for authenticated user
     - Updates payment status in database
     - Includes improved authentication checks and logging
     
@@ -425,16 +539,34 @@ class PaymentAPIView(APIView):
             logger.warning(f"PaymentAPIView: Unauthenticated access attempt from IP {request.META.get('REMOTE_ADDR')}")
             return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
         
-        # TODO: Implement actual payment processing
-        # For now, assume payment is successful
-        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
-        payment_status_obj.paid = True
-        payment_status_obj.save()
+        stripe.api_key = settings.STRIPE_SECRET_KEY
         
-        return Response(
-            {'message': 'Payment successful.'}, 
-            status=status.HTTP_200_OK
-        )
+        token = request.data.get('stripeToken')
+        amount = 5000  # amount in cents, e.g., $50.00
+        
+        if not token:
+            return Response({'error': 'Missing payment token'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            charge = stripe.Charge.create(
+                amount=amount,
+                currency='usd',
+                description=f'Payment for user {request.user.username}',
+                source=token,
+            )
+            
+            payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
+            payment_status_obj.paid = True
+            payment_status_obj.save()
+            
+            return Response({'message': 'Payment successful.'}, status=status.HTTP_200_OK)
+        
+        except stripe.error.CardError as e:
+            return Response({'error': e.user_message}, status=status.HTTP_400_BAD_REQUEST)
+        except stripe.error.StripeError:
+            return Response({'error': 'Payment processing error. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ============================================================================
 # REST API VIEWS - INVENTORY MANAGEMENT

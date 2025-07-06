@@ -134,3 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Import deployment settings if DJANGO_DEPLOYMENT environment variable is set
 if os.getenv('DJANGO_DEPLOYMENT') == 'true':
     from .deployment_settings import *
+
+# Stripe API keys (set your actual keys here or via environment variables)
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'your-stripe-secret-key')
+STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', 'your-stripe-public-key')
