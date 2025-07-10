@@ -1,39 +1,123 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Payment</h2>
+<style>
+  .payment-container {
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .payment-header {
+    text-align: right;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-weight: 700;
+  }
+  .messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  .messages li {
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .messages li.success {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  .messages li.error {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  .form-label {
+    font-weight: 600;
+    color: #34495e;
+  }
+  .form-check {
+    margin-bottom: 12px;
+  }
+  .form-check-input {
+    cursor: pointer;
+  }
+  #card-element {
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background: white;
+    margin-bottom: 20px;
+  }
+  #card-errors {
+    font-size: 0.9rem;
+    color: #e74c3c;
+    min-height: 20px;
+    margin-bottom: 20px;
+  }
+  button.btn-primary {
+    background-color: #2980b9;
+    border: none;
+    padding: 12px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+  button.btn-primary:hover {
+    background-color: #1c5980;
+  }
+</style>
 
-{% if messages %}
-<ul class="messages">
-  {% for message in messages %}
-  <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-  {% endfor %}
-</ul>
-{% endif %}
-
-<form action="{% url 'payment' %}" method="post" id="payment-form" class="card p-4 bg-white rounded shadow-sm" style="max-width: 400px; margin: auto;">
-  {% csrf_token %}
-  
-  <div class="mb-3">
-    <label class="form-label"><strong>Select Subscription Plan:</strong></label><br>
-    <div class="form-check">
-      <input class="form-check-input" type="radio" id="one_month" name="subscription_plan" value="1_month" {% if subscription_plan == '1_month' %}checked{% endif %} required>
-      <label class="form-check-label" for="one_month">1 Month - ₦5,000</label>
-    </div>
-    <div class="form-check">
-      <input class="form-check-input" type="radio" id="six_month" name="subscription_plan" value="6_month" {% if subscription_plan == '6_month' %}checked{% endif %}>
-      <label class="form-check-label" for="six_month">6 Months - ₦27,000</label>
-    </div>
-    <div class="form-check">
-      <input class="form-check-input" type="radio" id="one_year" name="subscription_plan" value="1_year" {% if subscription_plan == '1_year' %}checked{% endif %}>
-      <label class="form-check-label" for="one_year">1 Year - ₦50,000</label>
-    </div>
+<div class="payment-container">
+  <div class="payment-header">
+    Welcome, {{ username }}
   </div>
-  
-  <div id="card-element" class="mb-3"><!-- Stripe.js injects the Card Element --></div>
-  <div id="card-errors" role="alert" style="color: red;" class="mb-3"></div>
-  <button type="submit" class="btn btn-primary w-100">Pay</button>
-</form>
+
+  <h2>Payment</h2>
+
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <form action="{% url 'payment' %}" method="post" id="payment-form" class="card p-4 bg-white rounded shadow-sm">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      <label class="form-label"><strong>Select Subscription Plan:</strong></label><br>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" id="one_month" name="subscription_plan" value="1_month" {% if subscription_plan == '1_month' %}checked{% endif %} required>
+        <label class="form-check-label" for="one_month">1 Month - ₦5,000</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" id="six_month" name="subscription_plan" value="6_month" {% if subscription_plan == '6_month' %}checked{% endif %}>
+        <label class="form-check-label" for="six_month">6 Months - ₦27,000</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" id="one_year" name="subscription_plan" value="1_year" {% if subscription_plan == '1_year' %}checked{% endif %}>
+        <label class="form-check-label" for="one_year">1 Year - ₦50,000</label>
+      </div>
+    </div>
+    
+    <div id="card-element"><!-- Stripe.js injects the Card Element --></div>
+    <div id="card-errors" role="alert"></div>
+    <button type="submit" class="btn btn-primary w-100">Pay</button>
+  </form>
+</div>
 
 <script src="https://js.stripe.com/v3/"></script>
 <script>

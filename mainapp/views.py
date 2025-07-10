@@ -45,7 +45,7 @@ from .models import (
     UserProfile, PaymentStatus, UsageStats, StockItem, 
     SalesRecord, DeletedRecordLog
 )
-from .serializers import StockItemSerializer
+from .serializers import StockItemSerializer, SalesRecordSerializer
 
 # Third-party Library Imports
 import os
@@ -54,6 +54,57 @@ import json
 import traceback
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .authentication import CookieTokenAuthentication
+
+class SaleRecordCreateAPIView(generics.CreateAPIView):
+    """
+    API endpoint for creating sales records.
+    """
+    serializer_class = SalesRecordSerializer
+    authentication_classes = [CookieTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SalesSummaryAPIView(generics.ListAPIView):
+    """
+    API endpoint to list sales summary records for the authenticated user.
+    """
+    authentication_classes = [CookieTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = SalesRecordSerializer
+
+    def get_queryset(self):
+        return SalesRecord.objects.filter(user=self.request.user).order_by('-timestamp')
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ClearSalesAPIView(APIView):
+    """
+    API endpoint to delete all sales records for the authenticated user.
+    """
+    authentication_classes = [CookieTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        SalesRecord.objects.filter(user=request.user).delete()
+        return Response({'message': 'All sales records deleted.'}, status=status.HTTP_200_OK)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ClearDeletedItemsAPIView(APIView):
+    """
+    API endpoint to delete all deleted items records for the authenticated user.
+    """
+    authentication_classes = [CookieTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        DeletedRecordLog.objects.filter(user=request.user).delete()
+        return Response({'message': 'All deleted items records deleted.'}, status=status.HTTP_200_OK)
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -215,6 +266,20 @@ def signup(request):
             developer_user = User.objects.filter(username='developer').first()
             if developer_user:
                 auth_login(request, developer_user)
+                # Set auth_token cookie for token authentication
+                from rest_framework.authtoken.models import Token
+                token, created = Token.objects.get_or_create(user=developer_user)
+                response = redirect('payment')
+                response.set_cookie(
+                    key='auth_token',
+                    value=token.key,
+                    httponly=True,
+                    secure=False,  # Disable secure flag for local development
+                    samesite='Lax',
+                    max_age=60*60*24*7,  # 7 days
+                    path='/',
+                )
+                return response
         
         # Redirect to payment page
         messages.success(request, 'Signup successful. Please complete payment.')
@@ -290,6 +355,7 @@ def payment(request):
     return render(request, 'payment.html', {
         'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
         'subscription_plan': subscription_plan,
+        'username': request.user.username,
     })
 
 
@@ -339,12 +405,24 @@ def usage_tracking(request):
 # INVENTORY MANAGEMENT VIEWS
 # ============================================================================
 
+from .models import PaymentStatus
+
 def inventory(request):
     """
     Renders the inventory management interface.
     Allows users to view and manage their stock items.
     """
-    return render(request, 'inventory.html')
+    has_paid = False
+    if request.user.is_authenticated:
+        if request.user.username == 'developer':
+            has_paid = True
+        else:
+            try:
+                payment_status = PaymentStatus.objects.get(user=request.user)
+                has_paid = payment_status.paid
+            except PaymentStatus.DoesNotExist:
+                has_paid = False
+    return render(request, 'inventory.html', {'has_paid': has_paid})
 
 def receipt(request):
     """
@@ -596,11 +674,26 @@ class StockItemListCreateAPIView(generics.ListCreateAPIView):
         """Return only stock items belonging to the current user."""
         return StockItem.objects.filter(user=self.request.user)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            logger.error(f"Serializer validation error: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         if not self.request.user or not self.request.user.is_authenticated:
             logger.warning(f"StockItemListCreateAPIView: Unauthenticated create attempt from IP {self.request.META.get('REMOTE_ADDR')}")
             raise PermissionError("User not authenticated")
-        """Automatically assign the current user to new stock items."""
         serializer.save(user=self.request.user)
 
 class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -645,75 +738,31 @@ class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
 # REST API VIEWS - SALES AND REPORTING
 # ============================================================================
 
-class SaleRecordCreateAPIView(APIView):
+class DeletedRecordLogListAPIView(generics.ListAPIView):
     """
-    API endpoint for recording sales transactions.
-    
-    POST /api/sales/
-    - Records new sales transaction
-    - Handles both authenticated and anonymous sales
-    - Stores detailed transaction information
-    - Improved error handling and logging
-    
-    Request Body:
-    {
-        "items": [array of sold items],
-        "total": number,
-        "customerName": "string"
-    }
+    API endpoint to list deleted stock items for the authenticated user.
     """
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    authentication_classes = [CookieTokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = None  # Will define inline serializer
 
-    def post(self, request):
-        try:
-            # Handle user assignment (authenticated or default)
-            user = None
-            if request.user and request.user.is_authenticated:
-                user = request.user
-            else:
-                # Assign to first superuser if no authenticated user
-                user = User.objects.filter(is_superuser=True).first()
-                if not user:
-                    return Response(
-                        {'error': 'No valid user found to assign sale record.'}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            
-            # Extract sale data
-            items = request.data.get('items', [])
-            total = request.data.get('total', 0)
-            customer_name = request.data.get('customerName', '')
+    def get_queryset(self):
+        return DeletedRecordLog.objects.filter(user=self.request.user).order_by('-deleted_at')
 
-            # Validate sale data
-            if not items or total <= 0:
-                return Response(
-                    {'error': 'Invalid sale data.'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Create sales record
-            sales_record = SalesRecord.objects.create(
-                user=user,
-                items=items,
-                total=total,
-                customer_name=customer_name
-            )
-            sales_record.save()
-
-            return Response(
-                {'message': 'Sale recorded successfully.'}, 
-                status=status.HTTP_201_CREATED
-            )
-            
-        except Exception as e:
-            # Log full traceback for debugging
-            tb = traceback.format_exc()
-            logger.error(f"Exception in SaleRecordCreateAPIView POST: {str(e)}\n{tb}")
-            return Response(
-                {'error': str(e), 'traceback': tb}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = []
+        for item in queryset:
+            data.append({
+                'id': item.id,
+                'name': item.item_name,
+                'size': item.size,
+                'price': float(item.price),
+                'quantity': item.quantity,
+                'deletedAt': item.deleted_at.isoformat(),
+                'snapshot': item.snapshot if hasattr(item, 'snapshot') else None,
+            })
+        return Response(data)
 
 # ============================================================================
 # REST API VIEWS - ADMINISTRATIVE
@@ -774,6 +823,22 @@ class UsageTrackingAPIView(APIView):
 # ============================================================================
 # REST API VIEWS - PDF REPORTING
 # ============================================================================
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
+
+@method_decorator(csrf_exempt, name='dispatch')
+class VerifyAuthAPIView(APIView):
+    """
+    API endpoint to verify user authentication status.
+    GET /api/verify-auth/
+    Returns 200 OK if authenticated, 401 Unauthorized otherwise.
+    """
+    authentication_classes = [CookieTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'message': 'Authenticated'}, status=200)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SendSalesSummaryPDFAPIView(APIView):
@@ -969,11 +1034,22 @@ def login(request):
                 key='auth_token',
                 value=token.key,
                 httponly=True,
-                secure=not settings.DEBUG,
+                secure=False,  # Disable secure flag for local development
                 samesite='Lax',
                 max_age=60*60*24*7,  # 7 days
                 path='/',
             )
+            # Special handling for developer user to ensure auth_token cookie is set
+            if username == 'developer':
+                response.set_cookie(
+                    key='auth_token',
+                    value=token.key,
+                    httponly=True,
+                    secure=False,
+                    samesite='Lax',
+                    max_age=60*60*24*7,
+                    path='/',
+                )
             return response
         else:
             messages.error(request, 'Invalid username or password.')

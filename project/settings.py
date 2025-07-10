@@ -138,3 +138,7 @@ if os.getenv('DJANGO_DEPLOYMENT') == 'true':
 # Stripe API keys (set your actual keys here or via environment variables)
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'your-stripe-secret-key')
 STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', 'your-stripe-public-key')
+
+# Media files (uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

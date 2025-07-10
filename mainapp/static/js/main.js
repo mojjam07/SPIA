@@ -38,17 +38,16 @@ async function verifyAuthentication() {
     }
 }
 
-// Inventory Section: Add stock item with image upload
 const addItemForm = document.getElementById('add-item-form');
 if (addItemForm) {
     addItemForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Check authentication first
-        if (!isAuthenticated()) {
-            alert('You must be logged in to add items.');
-            window.location.href = '/login/';
-            return;
+
+        // Disable submit button to prevent multiple submissions
+        const submitButton = addItemForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Adding...';
         }
 
         // Verify authentication with server
@@ -84,13 +83,13 @@ if (addItemForm) {
                 credentials: 'include',
                 body: formData,
             });
-            
+
             if (response.status === 401 || response.status === 403) {
                 alert('Authentication failed. Please log in again.');
                 window.location.href = '/login/';
                 return;
             }
-            
+
             const data = await response.json();
             if (response.ok) {
                 alert('Item added successfully.');
@@ -102,21 +101,18 @@ if (addItemForm) {
         } catch (error) {
             console.error('Error adding item:', error);
             alert('Error adding item: ' + error.message);
+        } finally {
+            // Re-enable submit button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Add Item';
+            }
         }
     });
 }
 
 // Fetch and display stock items
 async function fetchStockItems() {
-    if (!isAuthenticated()) {
-        console.log('User not authenticated');
-        const container = document.getElementById('inventory-cards');
-        if (container) {
-            container.innerHTML = '<p>Please <a href="/login/">log in</a> to view inventory items.</p>';
-        }
-        return;
-    }
-    
     try {
         const response = await fetch('/api/stockitems/', {
             method: 'GET',
@@ -177,14 +173,7 @@ function displayStockItems(items) {
     });
 }
 
-// Delete stock item
-async function deleteStockItem(id) {
-    if (!isAuthenticated()) {
-        alert('You must be logged in to delete items.');
-        window.location.href = '/login/';
-        return;
-    }
-    
+window.deleteStockItem = async function deleteStockItem(id) {
     if (!confirm('Are you sure you want to delete this item?')) return;
     
     try {
@@ -247,8 +236,6 @@ function updateCartDisplay() {
 
 // Load available items for sale
 async function loadSaleItems() {
-    if (!isAuthenticated()) return;
-    
     try {
         const response = await fetch('/api/stockitems/', {
             method: 'GET',
@@ -316,12 +303,6 @@ if (saleForm) {
 const completeSaleBtn = document.getElementById('complete-sale-btn');
 if (completeSaleBtn) {
     completeSaleBtn.addEventListener('click', async () => {
-        if (!isAuthenticated()) {
-            alert('You must be logged in to complete sales.');
-            window.location.href = '/login/';
-            return;
-        }
-        
         if (cart.length === 0) {
             alert('Cart is empty.');
             return;
@@ -355,6 +336,10 @@ if (completeSaleBtn) {
                 // Refresh stock items to update quantities
                 fetchStockItems();
                 loadSaleItems();
+                // Print receipt
+                printReceipt(cart, total, customerName);
+                // Refresh sales report section
+                fetchSalesSummary();
             } else {
                 alert('Failed to record sale: ' + (data.error || 'Unknown error'));
             }
@@ -373,7 +358,300 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('sale-item')) {
         loadSaleItems();
     }
+    if (document.getElementById('deleted-items-table')) {
+        fetchDeletedItems();
+    }
+    if (document.getElementById('sales-summary-table')) {
+        fetchSalesSummary();
+    }
 });
+
+// Fetch and display sales summary in reports section
+async function fetchSalesSummary() {
+    try {
+        const response = await fetch('/api/sales-summary/', {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (response.ok) {
+            const sales = await response.json();
+            displaySalesSummary(sales);
+        } else if (response.status === 401 || response.status === 403) {
+            console.error('Authentication failed while fetching sales summary');
+            const tableBody = document.querySelector('#sales-summary-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="4">Authentication expired. Please <a href="/login/">log in again</a>.</td></tr>';
+            }
+        } else {
+            console.error('Failed to fetch sales summary');
+            const tableBody = document.querySelector('#sales-summary-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="4">Error loading sales summary.</td></tr>';
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching sales summary:', error);
+        const tableBody = document.querySelector('#sales-summary-table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="4">Error loading sales summary.</td></tr>';
+        }
+    }
+}
+
+// Clear all sales records
+const clearSalesBtn = document.getElementById('clearSalesBtn');
+if (clearSalesBtn) {
+    clearSalesBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete all sales records?')) return;
+
+        try {
+            const response = await fetch('/api/clear-sales/', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+            });
+
+            if (response.ok) {
+                alert('All sales records deleted.');
+                fetchSalesSummary();
+            } else {
+                alert('Failed to delete sales records.');
+            }
+        } catch (error) {
+            console.error('Error deleting sales records:', error);
+            alert('Error deleting sales records: ' + error.message);
+        }
+    });
+}
+
+// Clear all deleted items records
+const clearDeletedBtn = document.getElementById('clearDeletedBtn');
+if (clearDeletedBtn) {
+    clearDeletedBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete all deleted items records?')) return;
+
+        try {
+            const response = await fetch('/api/clear-deleted-items/', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+            });
+
+            if (response.ok) {
+                alert('All deleted items records deleted.');
+                fetchDeletedItems();
+            } else {
+                alert('Failed to delete deleted items records.');
+            }
+        } catch (error) {
+            console.error('Error deleting deleted items records:', error);
+            alert('Error deleting deleted items records: ' + error.message);
+        }
+    });
+}
+
+// Display sales summary in reports section table
+function displaySalesSummary(sales) {
+    const tableBody = document.querySelector('#sales-summary-table tbody');
+    if (!tableBody) return;
+
+    if (sales.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">No sales data available</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = '';
+    sales.forEach(sale => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${sale.id}</td>
+            <td>${new Date(sale.timestamp).toLocaleString()}</td>
+            <td>₦${sale.total.toFixed(2)}</td>
+            <td><button class="btn btn-sm btn-primary" onclick="viewSaleDetails(${sale.id})">View</button></td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
+
+// Print receipt function
+function printReceipt(cart, total, customerName) {
+    let receiptWindow = window.open('', 'Print Receipt', 'width=300,height=600');
+    let receiptContent = `
+        <html>
+        <head>
+            <title>POS Receipt</title>
+            <style>
+                body {
+                    font-family: monospace;
+                    font-size: 12px;
+                    width: 280px;
+                    padding: 10px;
+                }
+                h2, h3, p {
+                    text-align: center;
+                    margin: 5px 0;
+                }
+                .line {
+                    border-top: 1px dashed #000;
+                    margin: 5px 0;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    padding: 2px 5px;
+                    text-align: left;
+                }
+                th {
+                    border-bottom: 1px solid #000;
+                }
+                .right {
+                    text-align: right;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>StockPilot Store</h2>
+            <p>Customer: ${customerName}</p>
+            <p>${new Date().toLocaleString()}</p>
+            <div class="line"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th class="right">Price</th>
+                        <th class="right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        receiptContent += `
+            <tr>
+                <td>${item.item_name} (${item.size})</td>
+                <td>${item.quantity}</td>
+                <td class="right">₦${item.price.toFixed(2)}</td>
+                <td class="right">₦${itemTotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    receiptContent += `
+                </tbody>
+            </table>
+            <div class="line"></div>
+            <h3>Total: ₦${total.toFixed(2)}</h3>
+            <p style="text-align: center;">Thank you for your purchase!</p>
+        </body>
+        </html>
+    `;
+
+    receiptWindow.document.write(receiptContent);
+    receiptWindow.document.close();
+    receiptWindow.focus();
+    receiptWindow.print();
+    receiptWindow.close();
+}
+
+window.viewSaleDetails = function viewSaleDetails(saleId) {
+    alert('View details for sale ID: ' + saleId);
+};
+
+// Fetch and display deleted items in reports section
+async function fetchDeletedItems() {
+    try {
+        const response = await fetch('/api/deleted-items/', {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (response.ok) {
+            const deletedItems = await response.json();
+            displayDeletedItems(deletedItems);
+        } else if (response.status === 401 || response.status === 403) {
+            console.error('Authentication failed while fetching deleted items');
+            const tableBody = document.querySelector('#deleted-items-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="6">Authentication expired. Please <a href="/login/">log in again</a>.</td></tr>';
+            }
+        } else {
+            console.error('Failed to fetch deleted items');
+            const tableBody = document.querySelector('#deleted-items-table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="6">Error loading deleted items.</td></tr>';
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching deleted items:', error);
+        const tableBody = document.querySelector('#deleted-items-table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="6">Error loading deleted items.</td></tr>';
+        }
+    }
+}
+
+// Display deleted items in the reports section table
+function displayDeletedItems(items) {
+    const tableBody = document.querySelector('#deleted-items-table tbody');
+    if (!tableBody) return;
+
+    if (items.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No deleted items</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = '';
+    items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.size || ''}</td>
+            <td>₦${item.price.toFixed(2)}</td>
+            <td>${item.quantity}</td>
+            <td>${new Date(item.deletedAt).toLocaleString()}</td>
+            <td>${item.snapshot ? '<a href="' + item.snapshot + '" target="_blank">View</a>' : ''}</td>
+        `;
+        tableBody.appendChild(tr);
+    });
+}
+
+// Modify deleteStockItem to refresh deleted items after deletion
+window.deleteStockItem = async function deleteStockItem(id) {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+        const response = await fetch(`/api/stockitems/${id}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrftoken,
+            },
+            credentials: 'include',
+        });
+        
+        if (response.ok) {
+            alert('Item deleted successfully.');
+            fetchStockItems();
+            fetchDeletedItems();  // Refresh deleted items in reports section
+        } else if (response.status === 401 || response.status === 403) {
+            alert('Authentication failed. Please log in again.');
+            window.location.href = '/login/';
+        } else {
+            alert('Failed to delete item.');
+        }
+    } catch (error) {
+        console.error('Error deleting item:', error);
+        alert('Error deleting item: ' + error.message);
+    }
+}
 
 // Navigation functions to show/hide sections
 function showInventory(event) {

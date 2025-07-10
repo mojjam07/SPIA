@@ -34,4 +34,15 @@ urlpatterns = [
     path('api/send_deleted_items_pdf/', views.SendDeletedItemsPDFAPIView.as_view(), name='send_deleted_items_pdf'),
 
     path('api/record_sale/', views.SaleRecordCreateAPIView.as_view(), name='record_sale'),
+    path('api/verify-auth/', views.VerifyAuthAPIView.as_view(), name='api_verify_auth'),
+
+    # New API endpoint for deleted items list
+    path('api/deleted-items/', views.DeletedRecordLogListAPIView.as_view(), name='api_deleted_items'),
+
+    # New API endpoint for sales summary list
+    path('api/sales-summary/', views.SalesSummaryAPIView.as_view(), name='api_sales_summary'),
+
+    path('api/clear-sales/', views.ClearSalesAPIView.as_view(), name='api_clear_sales'),
+    path('api/clear-deleted-items/', views.ClearDeletedItemsAPIView.as_view(), name='api_clear_deleted_items'),
 ]
+

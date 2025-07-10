@@ -3,6 +3,8 @@
     <i class="fas fa-plus-circle"></i>
     Stock Entries
   </h2>
+
+  
   <form id="add-item-form" class="add-item-form">
     <input id="item-name" type="text" class="form-input" placeholder="Item Name" required />
     <input id="item-size" type="text" class="form-input" placeholder="Size" required />
@@ -19,6 +21,14 @@
     <i class="fas fa-warehouse"></i>
     Current Available Stocks
   </h3>
+  {% if has_paid or request.user.username == 'developer' %}
   <div id="inventory-cards" class="inventory-cards-container">
   </div>
+  {% else %}
+  <div style="text-align: center; margin-top: 50px;">
+    <a href="{% url 'payment' %}" class="btn btn-lg btn-warning">
+      Make payment to Use the App
+    </a>
+  </div>
+  {% endif %}
 </div>
