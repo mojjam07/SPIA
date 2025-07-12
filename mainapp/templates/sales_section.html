@@ -1,4 +1,7 @@
-<div id="sales-section" class="section-container" style="display: none;">
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div id="sales-section" class="section-container">
   <h2 class="section-title">
     <i class="fas fa-shopping-cart"></i>
     Sales Management
@@ -46,3 +49,4 @@
     Complete Sale
   </button>
 </div>
+{% endblock %}

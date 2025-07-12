@@ -156,20 +156,97 @@ function displayStockItems(items) {
         return;
     }
     
-    items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'inventory-card';
-        card.innerHTML = `
-            <img src="${item.image_url || '/static/images/stockpilot.png'}" alt="${item.item_name}" class="inventory-card-image" />
-            <div class="inventory-card-details">
-                <h4>${item.item_name}</h4>
-                <p>Size: ${item.size}</p>
-                <p>Price: ₦${item.price}</p>
-                <p>Quantity: ${item.quantity}</p>
-                <button class="btn btn-sm btn-danger" onclick="deleteStockItem(${item.id})">Delete</button>
-            </div>
-        `;
-        container.appendChild(card);
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'inventory-card';
+            card.innerHTML = `
+                <img src="${item.image_url || '/static/images/stockpilot.png'}" alt="${item.item_name}" class="inventory-card-image" />
+                <div class="inventory-card-details">
+                    <h4>${item.item_name}</h4>
+                    <p>Size: ${item.size}</p>
+                    <p>Price: ₦${item.price}</p>
+                    <p>Quantity: ${item.quantity}</p>
+                    <div style="display: flex; justify-content: space-between; gap: 10px;">
+                        <button class="btn btn-sm btn-primary" onclick="deleteStockItem(${item.id})">Delete</button>
+                        <button class="btn btn-sm btn-primary" onclick="openUpdateModal(${item.id}, ${item.quantity}, ${item.price})">Update</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+}
+
+// Open the update modal and populate fields
+window.openUpdateModal = function openUpdateModal(id, quantity, price) {
+    const modal = document.getElementById('updateStockModal');
+    const itemIdInput = document.getElementById('update-item-id');
+    const quantityInput = document.getElementById('update-item-quantity');
+    const priceInput = document.getElementById('update-item-price');
+
+    if (!modal || !itemIdInput || !quantityInput || !priceInput) return;
+
+    itemIdInput.value = id;
+    quantityInput.value = quantity;
+    priceInput.value = price;
+
+    modal.style.display = 'block';
+}
+
+// Close the update modal
+const closeUpdateModalBtn = document.getElementById('closeUpdateModal');
+if (closeUpdateModalBtn) {
+    closeUpdateModalBtn.addEventListener('click', () => {
+        const modal = document.getElementById('updateStockModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+// Handle update form submission
+const updateStockForm = document.getElementById('update-stock-form');
+if (updateStockForm) {
+    updateStockForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('update-item-id').value;
+        const quantity = parseInt(document.getElementById('update-item-quantity').value);
+        const price = parseFloat(document.getElementById('update-item-price').value);
+
+        if (!id || isNaN(quantity) || isNaN(price)) {
+            alert('Please enter valid quantity and price.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/stockitems/${id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                credentials: 'include',
+                body: JSON.stringify({ quantity, price }),
+            });
+
+            if (response.ok) {
+                alert('Stock item updated successfully.');
+                const modal = document.getElementById('updateStockModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                fetchStockItems();
+            } else if (response.status === 401 || response.status === 403) {
+                alert('Authentication failed. Please log in again.');
+                window.location.href = '/login/';
+            } else {
+                const data = await response.json();
+                alert('Failed to update item: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating stock item:', error);
+            alert('Error updating stock item: ' + error.message);
+        }
     });
 }
 
@@ -264,41 +341,42 @@ async function loadSaleItems() {
     }
 }
 
-if (saleForm) {
-    saleForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const saleItemSelect = document.getElementById('sale-item');
-        const quantityInput = document.getElementById('sale-quantity');
-        const selectedOption = saleItemSelect.options[saleItemSelect.selectedIndex];
-        
-        if (!selectedOption || !selectedOption.value || !quantityInput.value) {
-            alert('Please select an item and enter quantity.');
-            return;
-        }
-        
-        const item_name = selectedOption.dataset.name;
-        const size = selectedOption.dataset.size;
-        const price = parseFloat(selectedOption.dataset.price);
-        const quantity = parseInt(quantityInput.value);
-        const availableStock = parseInt(selectedOption.dataset.stock);
-        
-        if (quantity <= 0) {
-            alert('Quantity must be positive.');
-            return;
-        }
-        
-        if (quantity > availableStock) {
-            alert(`Only ${availableStock} items available in stock.`);
-            return;
-        }
-        
-        // Add to cart
-        cart.push({ item_name, size, price, quantity });
-        updateCartDisplay();
-        saleItemSelect.selectedIndex = 0;
-        quantityInput.value = '';
-    });
-}
+    if (saleForm) {
+        saleForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const saleItemSelect = document.getElementById('sale-item');
+            const quantityInput = document.getElementById('sale-quantity');
+            const selectedOption = saleItemSelect.options[saleItemSelect.selectedIndex];
+            
+            if (!selectedOption || !selectedOption.value || !quantityInput.value) {
+                alert('Please select an item and enter quantity.');
+                return;
+            }
+            
+            const item_name = selectedOption.dataset.name;
+            const size = selectedOption.dataset.size;
+            const price = parseFloat(selectedOption.dataset.price);
+            const quantity = parseInt(quantityInput.value);
+            const availableStock = parseInt(selectedOption.dataset.stock);
+            const itemId = selectedOption.value;
+            
+            if (quantity <= 0) {
+                alert('Quantity must be positive.');
+                return;
+            }
+            
+            if (quantity > availableStock) {
+                alert(`Only ${availableStock} items available in stock.`);
+                return;
+            }
+            
+            // Add to cart
+            cart.push({ item_name, size, price, quantity, id: itemId, stock: availableStock });
+            updateCartDisplay();
+            saleItemSelect.selectedIndex = 0;
+            quantityInput.value = '';
+        });
+    }
 
 const completeSaleBtn = document.getElementById('complete-sale-btn');
 if (completeSaleBtn) {
@@ -331,6 +409,27 @@ if (completeSaleBtn) {
             const data = await response.json();
             if (response.ok) {
                 alert('Sale recorded successfully.');
+                // Update stock quantities by decrementing based on cart items
+                for (const item of cart) {
+                    try {
+                        // Calculate new quantity after sale
+                        const newQuantity = Math.max(0, item.stock - item.quantity);
+                        const updateResponse = await fetch(`/api/stockitems/${item.id}/`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrftoken,
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({ quantity: newQuantity.toString() }),
+                        });
+                        if (!updateResponse.ok) {
+                            console.error(`Failed to update stock for item ID ${item.id}`);
+                        }
+                    } catch (updateError) {
+                        console.error(`Error updating stock for item ID ${item.id}:`, updateError);
+                    }
+                }
                 cart = [];
                 updateCartDisplay();
                 // Refresh stock items to update quantities
@@ -533,17 +632,25 @@ function printReceipt(cart, total, customerName) {
                 <tbody>
     `;
 
-    cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
+    if (!cart || cart.length === 0) {
         receiptContent += `
             <tr>
-                <td>${item.item_name} (${item.size})</td>
-                <td>${item.quantity}</td>
-                <td class="right">₦${item.price.toFixed(2)}</td>
-                <td class="right">₦${itemTotal.toFixed(2)}</td>
+                <td colspan="4" style="text-align: center; color: #666;">No items in cart</td>
             </tr>
         `;
-    });
+    } else {
+        cart.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            receiptContent += `
+                <tr>
+                    <td>${item.item_name} (${item.size || ''})</td>
+                    <td>${item.quantity}</td>
+                    <td class="right">₦${item.price.toFixed(2)}</td>
+                    <td class="right">₦${itemTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    }
 
     receiptContent += `
                 </tbody>

@@ -300,11 +300,16 @@ body {
 .footer {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 2rem 1rem;
+    padding: 1rem 1rem;
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
     font-size: 0.9rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1030;
 }
 
 .footer .col-md-6 {

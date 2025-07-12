@@ -14,6 +14,7 @@ urlpatterns = [
     path('inventory/', views.inventory, name='inventory'),
     path('receipt/', views.receipt, name='receipt'),
     path('sales/', views.sales, name='sales'),
+    path('reports/', views.reports_section, name='reports_section'),
 
     # API routes
     path('api/signup/', views.SignupAPIView.as_view(), name='api_signup'),
@@ -44,5 +45,13 @@ urlpatterns = [
 
     path('api/clear-sales/', views.ClearSalesAPIView.as_view(), name='api_clear_sales'),
     path('api/clear-deleted-items/', views.ClearDeletedItemsAPIView.as_view(), name='api_clear_deleted_items'),
-]
 
+    # Added missing API routes to fix 404 errors
+    path('api/top-products/', views.TopProductsAPIView.as_view(), name='api_top_products'),
+    path('api/daily-sales/', views.DailySalesAPIView.as_view(), name='api_daily_sales'),
+    path('api/revenue-overview/', views.RevenueOverviewAPIView.as_view(), name='api_revenue_overview'),
+    path('api/inventory-levels/', views.InventoryLevelsAPIView.as_view(), name='api_inventory_levels'),
+    path('api/weekly-sales/', views.WeeklySalesAPIView.as_view(), name='api_weekly_sales'),
+    path('api/sales-trend/', views.SalesTrendAPIView.as_view(), name='api_sales_trend'),
+    path('api/monthly-sales/', views.MonthlySalesAPIView.as_view(), name='api_monthly_sales'),
+]

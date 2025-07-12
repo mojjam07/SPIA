@@ -34,7 +34,9 @@ async function loadTopProductsChart() {
     const data = await fetchData('/api/top-products/');
     if (!data) return;
 
-    const ctx = document.getElementById('topProductsChart').getContext('2d');
+    const canvas = document.getElementById('topProductsChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (topProductsChart) topProductsChart.destroy();
 
     topProductsChart = new Chart(ctx, {
@@ -60,7 +62,9 @@ async function loadSalesTrendChart() {
     const data = await fetchData('/api/sales-trend/');
     if (!data) return;
 
-    const ctx = document.getElementById('salesTrendChart').getContext('2d');
+    const canvas = document.getElementById('salesTrendChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (salesTrendChart) salesTrendChart.destroy();
 
     salesTrendChart = new Chart(ctx, {
@@ -89,7 +93,9 @@ async function loadDailySalesChart() {
     const data = await fetchData('/api/daily-sales/');
     if (!data) return;
 
-    const ctx = document.getElementById('dailyChart').getContext('2d');
+    const canvas = document.getElementById('dailyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (dailyChart) dailyChart.destroy();
 
     dailyChart = new Chart(ctx, {
@@ -109,22 +115,27 @@ async function loadDailySalesChart() {
     });
 }
 
-// Load Revenue Overview Chart (Doughnut Chart)
 async function loadRevenueOverviewChart() {
     const data = await fetchData('/api/revenue-overview/');
     if (!data) return;
 
-    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (revenueChart) revenueChart.destroy();
+
+    // Convert object data to arrays for labels and values
+    const labels = ['Total Revenue', 'Paid Users', 'Unpaid Users'];
+    const values = [data.total_revenue || 0, data.paid_users || 0, data.unpaid_users || 0];
 
     revenueChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: data.map(item => item.category),
+            labels: labels,
             datasets: [{
                 label: 'Revenue',
-                data: data.map(item => item.amount),
-                backgroundColor: generateColors(data.length),
+                data: values,
+                backgroundColor: generateColors(labels.length),
             }]
         },
         options: {
@@ -139,7 +150,9 @@ async function loadInventoryLevelsChart() {
     const data = await fetchData('/api/inventory-levels/');
     if (!data) return;
 
-    const ctx = document.getElementById('inventoryChart').getContext('2d');
+    const canvas = document.getElementById('inventoryChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (inventoryChart) inventoryChart.destroy();
 
     inventoryChart = new Chart(ctx, {
@@ -166,7 +179,9 @@ async function loadWeeklySalesChart() {
     const data = await fetchData('/api/weekly-sales/');
     if (!data) return;
 
-    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    const canvas = document.getElementById('weeklyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (weeklyChart) weeklyChart.destroy();
 
     weeklyChart = new Chart(ctx, {
@@ -195,7 +210,9 @@ async function loadMonthlySalesChart() {
     const data = await fetchData('/api/monthly-sales/');
     if (!data) return;
 
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const canvas = document.getElementById('monthlyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (monthlyChart) monthlyChart.destroy();
 
     monthlyChart = new Chart(ctx, {

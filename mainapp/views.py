@@ -36,8 +36,6 @@ from rest_framework.authentication import TokenAuthentication
 from .authentication import CookieTokenAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-import stripe
-
 logger = logging.getLogger(__name__)
 
 # Local Model and Serializer Imports
@@ -45,7 +43,7 @@ from .models import (
     UserProfile, PaymentStatus, UsageStats, StockItem, 
     SalesRecord, DeletedRecordLog
 )
-from .serializers import StockItemSerializer, SalesRecordSerializer
+from .serializers import StockItemSerializer
 
 # Third-party Library Imports
 import os
@@ -54,57 +52,6 @@ import json
 import traceback
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from .authentication import CookieTokenAuthentication
-
-class SaleRecordCreateAPIView(generics.CreateAPIView):
-    """
-    API endpoint for creating sales records.
-    """
-    serializer_class = SalesRecordSerializer
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-@method_decorator(csrf_exempt, name='dispatch')
-class SalesSummaryAPIView(generics.ListAPIView):
-    """
-    API endpoint to list sales summary records for the authenticated user.
-    """
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    serializer_class = SalesRecordSerializer
-
-    def get_queryset(self):
-        return SalesRecord.objects.filter(user=self.request.user).order_by('-timestamp')
-
-@method_decorator(csrf_exempt, name='dispatch')
-class ClearSalesAPIView(APIView):
-    """
-    API endpoint to delete all sales records for the authenticated user.
-    """
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request):
-        SalesRecord.objects.filter(user=request.user).delete()
-        return Response({'message': 'All sales records deleted.'}, status=status.HTTP_200_OK)
-
-@method_decorator(csrf_exempt, name='dispatch')
-class ClearDeletedItemsAPIView(APIView):
-    """
-    API endpoint to delete all deleted items records for the authenticated user.
-    """
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request):
-        DeletedRecordLog.objects.filter(user=request.user).delete()
-        return Response({'message': 'All deleted items records deleted.'}, status=status.HTTP_200_OK)
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -119,55 +66,6 @@ def create_default_developer_user():
     password = 'developerpassword'
     if not User.objects.filter(username=username).exists():
         User.objects.create_user(username=username, password=password)
-
-def create_default_users():
-    """
-    Creates default users with paid status and active subscriptions.
-    """
-    from datetime import datetime, timedelta
-    default_users = [
-        {
-            'username': 'user1',
-            'password': 'password1',
-            'email': 'user1@example.com',
-            'full_name': 'User One',
-            'subscription_plan': '1_year',
-            'subscription_expiry': datetime.now() + timedelta(days=365),
-            'paid': True,
-        },
-        {
-            'username': 'user2',
-            'password': 'password2',
-            'email': 'user2@example.com',
-            'full_name': 'User Two',
-            'subscription_plan': '6_month',
-            'subscription_expiry': datetime.now() + timedelta(days=180),
-            'paid': True,
-        },
-        {
-            'username': 'user3',
-            'password': 'password3',
-            'email': 'user3@example.com',
-            'full_name': 'User Three',
-            'subscription_plan': '1_month',
-            'subscription_expiry': datetime.now() + timedelta(days=30),
-            'paid': True,
-        },
-    ]
-
-    for user_data in default_users:
-        user, created = User.objects.get_or_create(username=user_data['username'])
-        if created:
-            user.set_password(user_data['password'])
-            user.email = user_data['email']
-            user.first_name = user_data['full_name']
-            user.save()
-            UserProfile.objects.create(user=user, full_name=user_data['full_name'])
-        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=user)
-        payment_status_obj.paid = user_data['paid']
-        payment_status_obj.subscription_plan = user_data['subscription_plan']
-        payment_status_obj.subscription_expiry = user_data['subscription_expiry']
-        payment_status_obj.save()
 
 def increment_signup():
     """
@@ -218,7 +116,17 @@ def access_control(request):
     Renders the access control page containing login/signup/payment options.
     Acts as a central hub for user authentication flows.
     """
-    return render(request, 'access_control.html')
+    signup_count = 0
+    try:
+        # Retrieve the number of signups from usage statistics to display on the page.
+        usage_stats, created = UsageStats.objects.get_or_create(id=1)
+        signup_count = usage_stats.signups
+    except Exception as e:
+        # Log an error if stats can't be retrieved, but don't crash the page.
+        logger.error(f"Error retrieving usage stats for access control page: {e}")
+
+    context = {'signup_count': signup_count}
+    return render(request, 'access_control.html', context)
 
 def signup(request):
     """
@@ -256,31 +164,6 @@ def signup(request):
         # Update usage statistics
         increment_signup()
         
-        # Authenticate and log the user in
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            auth_login(request, user)
-        
-        # If the user is 'developer', automatically authenticate without password
-        if username == 'developer':
-            developer_user = User.objects.filter(username='developer').first()
-            if developer_user:
-                auth_login(request, developer_user)
-                # Set auth_token cookie for token authentication
-                from rest_framework.authtoken.models import Token
-                token, created = Token.objects.get_or_create(user=developer_user)
-                response = redirect('payment')
-                response.set_cookie(
-                    key='auth_token',
-                    value=token.key,
-                    httponly=True,
-                    secure=False,  # Disable secure flag for local development
-                    samesite='Lax',
-                    max_age=60*60*24*7,  # 7 days
-                    path='/',
-                )
-                return response
-        
         # Redirect to payment page
         messages.success(request, 'Signup successful. Please complete payment.')
         return redirect('payment')
@@ -289,75 +172,26 @@ def signup(request):
 
 def payment(request):
     """
-    Handles payment processing for user accounts in Nigerian Naira (₦).
+    Handles payment processing for user accounts.
     
     Requires user authentication.
-    POST: Processes Stripe payment and marks user as paid
+    POST: Marks user as paid (payment processing would be implemented here)
     
-    Integrates Stripe payment gateway.
+    Note: This is a simplified implementation. Real payment processing
+    would integrate with payment gateways like Stripe, PayPal, etc.
     """
     if not request.user.is_authenticated:
         return redirect('login')
     
-    stripe.api_key = settings.STRIPE_SECRET_KEY
-    
-    subscription_plan = '1_month'  # default plan
     if request.method == 'POST':
-        # Get the payment token ID submitted by the form
-        token = request.POST.get('stripeToken')
-        subscription_plan = request.POST.get('subscription_plan', '1_month')
-        
-        # Set amount and expiry based on subscription plan
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        
-        if subscription_plan == '1_month':
-            amount_naira = 5000
-            expiry = now + timedelta(days=30)
-        elif subscription_plan == '6_month':
-            amount_naira = 27000
-            expiry = now + timedelta(days=180)
-        elif subscription_plan == '1_year':
-            amount_naira = 50000
-            expiry = now + timedelta(days=365)
-        else:
-            amount_naira = 5000  # fallback to 1 month
-            expiry = now + timedelta(days=30)
-        
-        amount_kobo = amount_naira * 100  # Stripe requires amount in Kobo
-        
-        try:
-            # Create a charge: this will charge the user's card
-            charge = stripe.Charge.create(
-                amount=amount_kobo,
-                currency='ngn',
-                description=f'Payment for user {request.user.username} - {subscription_plan}',
-                source=token,
-            )
-            
-            # Mark payment as successful and save subscription info
-            payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
-            payment_status_obj.paid = True
-            payment_status_obj.subscription_plan = subscription_plan
-            payment_status_obj.subscription_expiry = expiry
-            payment_status_obj.save()
-            
-            messages.success(request, 'Payment successful.')
-            return redirect('index')
-        
-        except stripe.error.CardError as e:
-            messages.error(request, f'Card error: {e.user_message}')
-        except stripe.error.StripeError as e:
-            messages.error(request, 'Payment processing error. Please try again.')
-        except Exception as e:
-            messages.error(request, f'An error occurred: {str(e)}')
+        # TODO: Implement actual payment processing logic
+        # For now, assume payment is successful
+        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
+        payment_status_obj.paid = True
+        payment_status_obj.save()
+        return redirect('index')
     
-    return render(request, 'payment.html', {
-        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-        'subscription_plan': subscription_plan,
-        'username': request.user.username,
-    })
-
+    return render(request, 'payment.html')
 
 def logout(request):
     """
@@ -385,7 +219,6 @@ def usage_tracking(request):
     - List of all registered users
     - Payment status for each user
     - User registration dates
-    - Subscription plan and expiry
     """
     # Restrict access to developer account only
     if request.user.username != 'developer':
@@ -394,7 +227,7 @@ def usage_tracking(request):
     # Fetch all users and their payment status
     users = User.objects.all().order_by('date_joined')
     payment_status_qs = PaymentStatus.objects.all()
-    payment_status_dict = {ps.user.username: ps for ps in payment_status_qs}
+    payment_status_dict = {ps.user.username: ps.paid for ps in payment_status_qs}
     
     return render(request, 'usage_tracking.html', {
         'users': users, 
@@ -405,24 +238,12 @@ def usage_tracking(request):
 # INVENTORY MANAGEMENT VIEWS
 # ============================================================================
 
-from .models import PaymentStatus
-
 def inventory(request):
     """
     Renders the inventory management interface.
     Allows users to view and manage their stock items.
     """
-    has_paid = False
-    if request.user.is_authenticated:
-        if request.user.username == 'developer':
-            has_paid = True
-        else:
-            try:
-                payment_status = PaymentStatus.objects.get(user=request.user)
-                has_paid = payment_status.paid
-            except PaymentStatus.DoesNotExist:
-                has_paid = False
-    return render(request, 'inventory.html', {'has_paid': has_paid})
+    return render(request, 'inventory_section.html')
 
 def receipt(request):
     """
@@ -436,8 +257,40 @@ def sales(request):
     Renders the sales tracking and reporting interface.
     Provides overview of sales performance and transaction history.
     """
-    return render(request, 'sales.html')
+    return render(request, 'sales_section.html')
 
+
+@login_required
+def reports_section(request):
+    """
+    Reports section page.
+    """
+    username = request.user.username
+    return render(request, 'reports_section.html', {'username': username})
+
+@login_required
+def inventory(request):
+    """
+    Renders the inventory management interface.
+    Allows users to view and manage their stock items.
+    """
+    username = request.user.username
+    has_paid = False
+    try:
+        payment_status = PaymentStatus.objects.get(user=request.user)
+        has_paid = payment_status.paid
+    except PaymentStatus.DoesNotExist:
+        has_paid = False
+    return render(request, 'inventory_section.html', {'username': username, 'has_paid': has_paid})
+
+@login_required
+def sales(request):
+    """
+    Renders the sales tracking and reporting interface.
+    Provides overview of sales performance and transaction history.
+    """
+    username = request.user.username
+    return render(request, 'sales_section.html', {'username': username})
 # ============================================================================
 # SYSTEM HEALTH AND MONITORING
 # ============================================================================
@@ -574,10 +427,7 @@ class LoginAPIView(APIView):
             # Create or retrieve authentication token
             token, created = Token.objects.get_or_create(user=user)
             response = Response(
-                {
-                    'message': 'Login successful.',
-                    'redirect_url': '/index/'  # Add redirect URL for frontend handling
-                }, 
+                {'message': 'Login successful.'}, 
                 status=status.HTTP_200_OK
             )
             # Set token in HTTP-only cookie
@@ -603,7 +453,7 @@ class PaymentAPIView(APIView):
     API endpoint for payment processing.
     
     POST /api/payment/
-    - Processes Stripe payment for authenticated user
+    - Processes payment for authenticated user
     - Updates payment status in database
     - Includes improved authentication checks and logging
     
@@ -617,34 +467,16 @@ class PaymentAPIView(APIView):
             logger.warning(f"PaymentAPIView: Unauthenticated access attempt from IP {request.META.get('REMOTE_ADDR')}")
             return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
         
-        stripe.api_key = settings.STRIPE_SECRET_KEY
+        # TODO: Implement actual payment processing
+        # For now, assume payment is successful
+        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
+        payment_status_obj.paid = True
+        payment_status_obj.save()
         
-        token = request.data.get('stripeToken')
-        amount = 5000  # amount in cents, e.g., $50.00
-        
-        if not token:
-            return Response({'error': 'Missing payment token'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            charge = stripe.Charge.create(
-                amount=amount,
-                currency='usd',
-                description=f'Payment for user {request.user.username}',
-                source=token,
-            )
-            
-            payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
-            payment_status_obj.paid = True
-            payment_status_obj.save()
-            
-            return Response({'message': 'Payment successful.'}, status=status.HTTP_200_OK)
-        
-        except stripe.error.CardError as e:
-            return Response({'error': e.user_message}, status=status.HTTP_400_BAD_REQUEST)
-        except stripe.error.StripeError:
-            return Response({'error': 'Payment processing error. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(
+            {'message': 'Payment successful.'}, 
+            status=status.HTTP_200_OK
+        )
 
 # ============================================================================
 # REST API VIEWS - INVENTORY MANAGEMENT
@@ -674,26 +506,11 @@ class StockItemListCreateAPIView(generics.ListCreateAPIView):
         """Return only stock items belonging to the current user."""
         return StockItem.objects.filter(user=self.request.user)
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({"request": self.request})
-        return context
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-        except Exception as e:
-            logger.error(f"Serializer validation error: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
     def perform_create(self, serializer):
         if not self.request.user or not self.request.user.is_authenticated:
             logger.warning(f"StockItemListCreateAPIView: Unauthenticated create attempt from IP {self.request.META.get('REMOTE_ADDR')}")
             raise PermissionError("User not authenticated")
+        """Automatically assign the current user to new stock items."""
         serializer.save(user=self.request.user)
 
 class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -738,31 +555,75 @@ class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
 # REST API VIEWS - SALES AND REPORTING
 # ============================================================================
 
-class DeletedRecordLogListAPIView(generics.ListAPIView):
+class SaleRecordCreateAPIView(APIView):
     """
-    API endpoint to list deleted stock items for the authenticated user.
+    API endpoint for recording sales transactions.
+    
+    POST /api/sales/
+    - Records new sales transaction
+    - Handles both authenticated and anonymous sales
+    - Stores detailed transaction information
+    - Improved error handling and logging
+    
+    Request Body:
+    {
+        "items": [array of sold items],
+        "total": number,
+        "customerName": "string"
+    }
     """
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = None  # Will define inline serializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-    def get_queryset(self):
-        return DeletedRecordLog.objects.filter(user=self.request.user).order_by('-deleted_at')
+    def post(self, request):
+        try:
+            # Handle user assignment (authenticated or default)
+            user = None
+            if request.user and request.user.is_authenticated:
+                user = request.user
+            else:
+                # Assign to first superuser if no authenticated user
+                user = User.objects.filter(is_superuser=True).first()
+                if not user:
+                    return Response(
+                        {'error': 'No valid user found to assign sale record.'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Extract sale data
+            items = request.data.get('items', [])
+            total = request.data.get('total', 0)
+            customer_name = request.data.get('customerName', '')
 
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        data = []
-        for item in queryset:
-            data.append({
-                'id': item.id,
-                'name': item.item_name,
-                'size': item.size,
-                'price': float(item.price),
-                'quantity': item.quantity,
-                'deletedAt': item.deleted_at.isoformat(),
-                'snapshot': item.snapshot if hasattr(item, 'snapshot') else None,
-            })
-        return Response(data)
+            # Validate sale data
+            if not items or total <= 0:
+                return Response(
+                    {'error': 'Invalid sale data.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create sales record
+            sales_record = SalesRecord.objects.create(
+                user=user,
+                items=items,
+                total=total,
+                customer_name=customer_name
+            )
+            sales_record.save()
+
+            return Response(
+                {'message': 'Sale recorded successfully.'}, 
+                status=status.HTTP_201_CREATED
+            )
+            
+        except Exception as e:
+            # Log full traceback for debugging
+            tb = traceback.format_exc()
+            logger.error(f"Exception in SaleRecordCreateAPIView POST: {str(e)}\n{tb}")
+            return Response(
+                {'error': str(e), 'traceback': tb}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # ============================================================================
 # REST API VIEWS - ADMINISTRATIVE
@@ -778,7 +639,7 @@ class UsageTrackingAPIView(APIView):
     - Restricted to developer account only
     
     Response includes:
-    - List of all users with registration dates
+    - List of all users with registration dates, subscription plan, and expiry
     - Payment status for each user
     - Overall usage statistics (signups, logins)
     """
@@ -796,17 +657,24 @@ class UsageTrackingAPIView(APIView):
         # Gather user and payment data
         users = User.objects.all().order_by('date_joined')
         payment_status_qs = PaymentStatus.objects.all()
-        payment_status_dict = {ps.user.username: ps.paid for ps in payment_status_qs}
+        payment_status_dict = {ps.user.username: ps for ps in payment_status_qs}
         usage_stats_obj, created = UsageStats.objects.get_or_create(id=1)
         
         # Format user data for API response
         users_data = []
         for user in users:
+            ps = payment_status_dict.get(user.username)
             users_data.append({
                 'username': user.username,
                 'email': user.email,
                 'date_joined': user.date_joined,
-                'payment_status': payment_status_dict.get(user.username, False),
+                'payment_status': ps.paid if ps else False,
+                'subscription_plan': ps.subscription_plan if ps else None,
+                'subscription_expiry': ps.subscription_expiry if ps else None,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'last_login': user.last_login,
+                'full_name': f"{user.first_name} {user.last_name}".strip(),
             })
         
         # Format usage statistics
@@ -823,22 +691,6 @@ class UsageTrackingAPIView(APIView):
 # ============================================================================
 # REST API VIEWS - PDF REPORTING
 # ============================================================================
-
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import SessionAuthentication
-
-@method_decorator(csrf_exempt, name='dispatch')
-class VerifyAuthAPIView(APIView):
-    """
-    API endpoint to verify user authentication status.
-    GET /api/verify-auth/
-    Returns 200 OK if authenticated, 401 Unauthorized otherwise.
-    """
-    authentication_classes = [CookieTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({'message': 'Authenticated'}, status=200)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SendSalesSummaryPDFAPIView(APIView):
@@ -1028,31 +880,226 @@ def login(request):
             auth_login(request, user)
             # Create or retrieve authentication token
             token, created = Token.objects.get_or_create(user=user)
-            response = redirect('index')
+            response = redirect('inventory')
             # Set token in HTTP-only cookie
             response.set_cookie(
                 key='auth_token',
                 value=token.key,
                 httponly=True,
-                secure=False,  # Disable secure flag for local development
+                secure=not settings.DEBUG,
                 samesite='Lax',
                 max_age=60*60*24*7,  # 7 days
                 path='/',
             )
-            # Special handling for developer user to ensure auth_token cookie is set
-            if username == 'developer':
-                response.set_cookie(
-                    key='auth_token',
-                    value=token.key,
-                    httponly=True,
-                    secure=False,
-                    samesite='Lax',
-                    max_age=60*60*24*7,
-                    path='/',
-                )
             return response
         else:
             messages.error(request, 'Invalid username or password.')
             return redirect('login')
     
     return render(request, 'login.html')
+
+from rest_framework.permissions import IsAuthenticated
+from mainapp.authentication import CookieTokenAuthentication
+
+class ClearDeletedItemsAPIView(APIView):
+    """
+    API endpoint to clear all deleted items records from DeletedRecordLog.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def delete(self, request):
+        try:
+            DeletedRecordLog.objects.all().delete()
+            return Response({'message': 'All deleted items cleared successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ClearSalesAPIView(APIView):
+    """
+    API endpoint to clear all sales records from SalesRecord.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def delete(self, request):
+        try:
+            SalesRecord.objects.all().delete()
+            return Response({'message': 'All sales records cleared successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class VerifyAuthAPIView(APIView):
+    """
+    API endpoint to verify if the user is authenticated.
+    Returns success if authenticated, error otherwise.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        return Response({'message': 'User is authenticated.'}, status=status.HTTP_200_OK)
+
+from rest_framework import generics
+from .serializers import DeletedRecordLogSerializer, SalesRecordSerializer
+from .models import DeletedRecordLog, SalesRecord
+
+class DeletedRecordLogListAPIView(generics.ListAPIView):
+    """
+    API endpoint to list all deleted record logs.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+    serializer_class = DeletedRecordLogSerializer
+
+    def get_queryset(self):
+        return DeletedRecordLog.objects.all()
+
+class SalesSummaryAPIView(generics.ListAPIView):
+    """
+    API endpoint to list all sales summary records.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+    serializer_class = SalesRecordSerializer
+
+    def get_queryset(self):
+        return SalesRecord.objects.all()
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.db.models import Sum
+from .serializers import StockItemSerializer
+from .models import StockItem
+
+class TopProductsAPIView(APIView):
+    """
+    API endpoint to list top products by total quantity sold.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        # Aggregate total quantity sold per product name
+        top_products = StockItem.objects.values('item_name').annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')[:10]
+        return Response(top_products)
+
+from django.db.models.functions import TruncDate
+from rest_framework import status
+
+class DailySalesAPIView(APIView):
+    """
+    API endpoint to provide daily sales totals.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        daily_sales = (
+            SalesRecord.objects
+            .annotate(date=TruncDate('timestamp'))
+            .values('date')
+            .annotate(total_sales=Sum('total'))
+            .order_by('-date')
+        )
+        return Response(daily_sales, status=status.HTTP_200_OK)
+
+from django.db.models.functions import TruncWeek
+
+class WeeklySalesAPIView(APIView):
+    """
+    API endpoint to provide weekly sales totals.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        weekly_sales = (
+            SalesRecord.objects
+            .annotate(week=TruncWeek('timestamp'))
+            .values('week')
+            .annotate(total_sales=Sum('total'))
+            .order_by('-week')
+        )
+        return Response(weekly_sales, status=status.HTTP_200_OK)
+
+from django.db.models.functions import TruncMonth
+
+class SalesTrendAPIView(APIView):
+    """
+    API endpoint to provide monthly sales trend.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        sales_trend = (
+            SalesRecord.objects
+            .annotate(month=TruncMonth('timestamp'))
+            .values('month')
+            .annotate(total_sales=Sum('total'))
+            .order_by('month')
+        )
+        return Response(sales_trend, status=status.HTTP_200_OK)
+
+class MonthlySalesAPIView(APIView):
+    """
+    API endpoint to provide monthly sales totals.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        monthly_sales = (
+            SalesRecord.objects
+            .annotate(month=TruncMonth('timestamp'))
+            .values('month')
+            .annotate(total_sales=Sum('total'))
+            .order_by('-month')
+        )
+        return Response(monthly_sales, status=status.HTTP_200_OK)
+
+class RevenueOverviewAPIView(APIView):
+    """
+    API endpoint to provide revenue overview.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        total_revenue = SalesRecord.objects.aggregate(total=Sum('total'))['total'] or 0
+        paid_users = PaymentStatus.objects.filter(paid=True).count()
+        unpaid_users = PaymentStatus.objects.filter(paid=False).count()
+        data = {
+            'total_revenue': total_revenue,
+            'paid_users': paid_users,
+            'unpaid_users': unpaid_users,
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+class InventoryLevelsAPIView(APIView):
+    """
+    API endpoint to provide inventory levels.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def get(self, request):
+        inventory_levels = (
+            StockItem.objects
+            .values('item_name')
+            .annotate(total_quantity=Sum('quantity'))
+            .order_by('-total_quantity')
+        )
+        return Response(inventory_levels, status=status.HTTP_200_OK)

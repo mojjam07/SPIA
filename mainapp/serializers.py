@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import StockItem, SalesRecord
+from .models import StockItem, SalesRecord, DeletedRecordLog
 
 class StockItemSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
@@ -22,3 +22,9 @@ class SalesRecordSerializer(serializers.ModelSerializer):
         model = SalesRecord
         fields = ['id', 'user', 'items', 'total', 'timestamp', 'customer_name']
         read_only_fields = ['id', 'timestamp', 'user']
+
+class DeletedRecordLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeletedRecordLog
+        fields = ['id', 'user', 'item_name', 'size', 'price', 'quantity', 'deleted_at']
+        read_only_fields = ['id', 'user', 'deleted_at']

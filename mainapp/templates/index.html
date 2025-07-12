@@ -2,14 +2,12 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-  {% include "navbar.html" %}
   <div class="main-container">
     {% include "inventory_section.html" %}
     {% include "sales_section.html" %}
     {% include "reports_section.html" %}
   </div>
   {% include "modals.html" %}
-  {% include "footer.html" %}
 {% endblock %}
 
 {% block scripts %}

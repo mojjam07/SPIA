@@ -1,4 +1,7 @@
-<div id="reports-section" class="section-container" style="display: none;">
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div id="reports-section" class="section-container">
   <h2 class="section-title">
     <i class="fas fa-chart-line"></i>
     Analytics & Reports
@@ -80,3 +83,4 @@
     </table>
   </div>
 </div>
+{% endblock %}
