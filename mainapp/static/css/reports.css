@@ -1,0 +1,333 @@
+/* General Body and Container Styles (can be shared across sections) */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7fa;
+    color: #333;
+}
+
+.section-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Section Titles (can be shared) */
+.section-title {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #3498db;
+}
+
+/* Specific styling for section titles with buttons */
+.section-title.d-flex {
+    /* Matches the d-flex class in your HTML */
+    justify-content: space-between;
+    text-align: left;
+    /* Align text left when button is present */
+    padding-right: 15px;
+    /* Add some padding if the button is close to edge */
+}
+
+/* Chart Grid Layout */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Flexible grid for charts */
+    gap: 25px;
+    /* Space between charts */
+    padding: 20px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    margin-bottom: 40px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Center chart title and canvas */
+}
+
+.chart-container h4 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 1.3em;
+    color: #667eea;
+    /* Color matching the HTML style attribute */
+}
+
+/* Table Styles (can be shared with sales_section.html) */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    /* Ensures rounded corners apply to content */
+}
+
+.modern-table thead {
+    background-color: #34495e;
+    color: white;
+}
+
+.modern-table th,
+.modern-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.modern-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.modern-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.modern-table tfoot {
+    background-color: #eaf1ff;
+    font-weight: bold;
+}
+
+.modern-table tfoot td {
+    padding: 15px;
+    border-top: 2px solid #aeb8d6;
+}
+
+/* No data message for tables */
+.modern-table tbody td[colspan] {
+    font-style: italic;
+    color: #888;
+    padding: 20px;
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+/* Table Responsive Container */
+.table-responsive {
+    overflow-x: auto;
+    /* Enables horizontal scrolling for tables on small screens */
+    -webkit-overflow-scrolling: touch;
+    /* Improves scrolling on iOS */
+    margin-bottom: 20px;
+}
+
+/* FontAwesome Icons - Ensure you have FontAwesome linked in your base.html */
+/* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> */
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+
+    /* Adjust grid for medium screens (e.g., tablets) */
+    .chart-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.7em;
+        flex-direction: column;
+        /* Stack title and button on small screens */
+        gap: 15px;
+        text-align: center;
+        padding-right: 0;
+        /* Remove specific padding for button alignment */
+    }
+
+    .section-title.d-flex {
+        align-items: center;
+        /* Center items when stacked */
+    }
+
+    .chart-grid {
+        grid-template-columns: 1fr;
+        /* Stack charts vertically on small screens */
+        padding: 15px;
+    }
+
+    .chart-container {
+        padding: 15px;
+    }
+
+    /* Responsive Table (similar to sales_section) */
+    .modern-table {
+        font-size: 0.9em;
+        white-space: nowrap;
+        /* Prevents text from wrapping within table cells */
+    }
+
+    .modern-table thead,
+    .modern-table tbody,
+    .modern-table th,
+    .modern-table td,
+    .modern-table tr {
+        display: block;
+        /* Treat table elements as blocks for stacking */
+    }
+
+    .modern-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        /* Hide table headers visually but keep them for screen readers */
+    }
+
+    .modern-table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .modern-table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        /* Make space for pseudo-element labels */
+        text-align: right;
+    }
+
+    .modern-table td:before {
+        content: attr(data-label);
+        /* Use data-label for responsive labels */
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-left: 15px;
+        font-weight: bold;
+        text-align: left;
+        color: #555;
+    }
+
+    /* Specific data-labels for each table (you'll need to add data-label attributes in your HTML for this to work perfectly with dynamic content) */
+    /* For #sales-summary-table */
+    #sales-summary-table tbody tr td:nth-of-type(1):before {
+        content: "ID:";
+    }
+
+    #sales-summary-table tbody tr td:nth-of-type(2):before {
+        content: "Date:";
+    }
+
+    #sales-summary-table tbody tr td:nth-of-type(3):before {
+        content: "Total:";
+    }
+
+    #sales-summary-table tbody tr td:nth-of-type(4):before {
+        content: "Action:";
+    }
+
+    /* For #deleted-items-table */
+    #deleted-items-table tbody tr td:nth-of-type(1):before {
+        content: "Name:";
+    }
+
+    #deleted-items-table tbody tr td:nth-of-type(2):before {
+        content: "Size:";
+    }
+
+    #deleted-items-table tbody tr td:nth-of-type(3):before {
+        content: "Price:";
+    }
+
+    #deleted-items-table tbody tr td:nth-of-type(4):before {
+        content: "Quantity:";
+    }
+
+    #deleted-items-table tbody tr td:nth-of-type(5):before {
+        content: "Deleted At:";
+    }
+
+    #deleted-items-table tbody tr td:nth-of-type(6):before {
+        content: "Snapshot:";
+    }
+
+    .modern-table tfoot td {
+        text-align: center !important;
+        padding-left: 15px;
+    }
+
+    .btn-danger {
+        width: 100%;
+        /* Full width for delete buttons on small screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .section-container {
+        padding: 15px;
+        margin: 15px auto;
+    }
+
+    .section-title {
+        font-size: 1.5em;
+    }
+
+    .chart-container {
+        padding: 10px;
+    }
+
+    .chart-container h4 {
+        font-size: 1.1em;
+    }
+
+    .modern-table {
+        font-size: 0.85em;
+    }
+
+    .modern-table td {
+        padding: 10px 10px 10px 45%;
+        /* Adjust padding for smaller labels */
+    }
+
+    .modern-table td:before {
+        width: 40%;
+        padding-left: 10px;
+    }
+
+    .btn-danger {
+        padding: 10px 12px;
+        font-size: 0.9em;
+    }
+}

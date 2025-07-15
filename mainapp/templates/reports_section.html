@@ -41,46 +41,50 @@
   <div class="section-container">
     <h3 class="section-title d-flex justify-content-between align-items-center">
       <span><i class="fas fa-list"></i> Sales Summary</span>
-      <button id="clearSalesBtn" class="btn btn-danger btn-md">Delete All</button>
+      <button id="clearSalesBtn" class="btn btn-danger btm-sm">Delete All</button>
     </h3>
-    <table class="modern-table" id="sales-summary-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Date</th>
-          <th>Total</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td colspan="4" style="text-align: center; color: #666;">No sales data available</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="modern-table" id="sales-summary-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="4" style="text-align: center; color: #666;">No sales data available</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
   <div class="section-container" style="margin-top: 2rem;">
     <h3 class="section-title d-flex justify-content-between align-items-center">
       <span><i class="fas fa-list"></i> Deleted Items</span>
-      <button id="clearDeletedBtn" class="btn btn-danger btn-md">Delete All</button>
+      <button id="clearDeletedBtn" class="btn btn-danger btm-sm">Delete All</button>
     </h3>
-    <table class="modern-table" id="deleted-items-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Size</th>
-          <th>Price</th>
-          <th>Quantity</th>
-          <th>Deleted At</th>
-          <th>Snapshot</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td colspan="6" style="text-align: center; color: #666;">No deleted items</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="modern-table" id="deleted-items-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Deleted At</th>
+            <th>Snapshot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="6" style="text-align: center; color: #666;">No deleted items</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

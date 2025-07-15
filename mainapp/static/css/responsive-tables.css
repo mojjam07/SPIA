@@ -1,0 +1,34 @@
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+}
+
+.modern-table th,
+.modern-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.modern-table thead {
+  background-color: #f4f4f4;
+}
+
+@media (max-width: 768px) {
+  .modern-table th,
+  .modern-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}

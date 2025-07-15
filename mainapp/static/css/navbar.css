@@ -1,0 +1,200 @@
+/* Navbar Styles */
+.navbar {
+    background-color: #34495e;
+    /* Dark background for the navbar */
+    padding: 15px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    /* Limit width for larger screens */
+    margin: 0 auto;
+    padding: 0 20px;
+    /* Add horizontal padding */
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    /* Ensure brand text/logo is visible */
+}
+
+.navbar-brand img {
+    height: 40px;
+    /* Adjust logo size */
+    width: auto;
+    margin-right: 10px;
+}
+
+.navbar-toggler {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    /* Lighter border for toggler */
+    padding: 8px 10px;
+    border-radius: 5px;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100%;
+}
+
+.navbar-collapse {
+    flex-grow: 1;
+    /* Allow collapse section to grow */
+    justify-content: flex-end;
+    /* Push nav items to the right */
+}
+
+.navbar-nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    /* Vertically align nav items */
+}
+
+.nav-item {
+    margin-left: 25px;
+    /* Space between nav items */
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    /* Lighter white for links */
+    text-decoration: none;
+    padding: 10px 0;
+    font-size: 1.05em;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Space between icon and text */
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: white;
+    /* Pure white on hover and for active link */
+}
+
+.nav-link i {
+    color: inherit;
+    /* Inherit color from parent nav-link */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+
+    /* For tablets and smaller desktops */
+    .navbar-collapse {
+        order: 1;
+        /* Pushes the toggler and collapse content below the brand on smaller screens */
+    }
+
+    .navbar .container {
+        flex-wrap: wrap;
+        /* Allow items to wrap */
+    }
+
+    .navbar-toggler {
+        display: block;
+        /* Show toggler button */
+    }
+
+    .navbar-collapse {
+        flex-basis: 100%;
+        /* Collapse takes full width */
+        margin-top: 15px;
+        /* Space below brand/toggler */
+        text-align: center;
+    }
+
+    .navbar-nav {
+        flex-direction: column;
+        /* Stack nav items vertically */
+        width: 100%;
+        /* Full width for stacked items */
+    }
+
+    .nav-item {
+        margin: 0;
+        /* Remove horizontal margin */
+        width: 100%;
+        /* Make each nav item full width */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        /* Separator for stacked items */
+    }
+
+    .nav-item:last-child {
+        border-bottom: none;
+        /* No border for the last item */
+    }
+
+    .nav-link {
+        padding: 12px 0;
+        /* More vertical padding for stacked links */
+        justify-content: center;
+        /* Center align text and icon */
+    }
+
+    .ms-auto {
+        /* Override Bootstrap's ms-auto for stacking */
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Further adjustments for smaller tablets and phones */
+    .navbar .container {
+        padding: 0 15px;
+        /* Reduce padding */
+    }
+
+    .navbar-brand img {
+        height: 35px;
+        /* Slightly smaller logo */
+    }
+
+    .nav-link {
+        font-size: 1em;
+        /* Smaller font size */
+        padding: 10px 0;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* For very small phones */
+    .navbar {
+        padding: 10px 0;
+    }
+
+    .navbar-toggler {
+        padding: 6px 8px;
+    }
+
+    .navbar-toggler-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    .navbar-brand img {
+        height: 30px;
+    }
+}

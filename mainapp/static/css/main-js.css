@@ -1,0 +1,496 @@
+/* General Form and Button Styles (can be shared across sections like inventory and sales) */
+.add-item-form {
+    display: flex;
+    flex-wrap: wrap;
+    /* Allow items to wrap on smaller screens */
+    gap: 15px;
+    /* Space between form elements */
+    padding: 20px;
+    background-color: #ecf0f1;
+    /* Light background for forms */
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    align-items: flex-end;
+    /* Align items to the bottom */
+}
+
+.form-input,
+.form-select {
+    flex: 1;
+    /* Allow inputs to grow and shrink */
+    min-width: 180px;
+    /* Minimum width for inputs before wrapping */
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    outline: none;
+}
+
+.btn-primary,
+.btn-success {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.05em;
+    font-weight: bold;
+    color: white;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    /* Space between icon and text */
+}
+
+.btn-primary {
+    background-color: #667eea;
+    /* Primary button color */
+}
+
+.btn-primary:hover {
+    background-color: #5a6acd;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background-color: #28a745;
+    /* Success button color */
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+/* Inventory Section Specific Styles */
+.inventory-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* Responsive grid for cards */
+    gap: 25px;
+    /* Space between cards */
+    padding: 20px;
+    background-color: #f8fafd;
+    /* Lighter background for the card grid */
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.inventory-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    /* Ensures rounded corners on image */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.inventory-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+}
+
+.inventory-card-image {
+    width: 100%;
+    height: 200px;
+    /* Fixed height for images */
+    object-fit: cover;
+    /* Cover the area, cropping if necessary */
+    border-bottom: 1px solid #eee;
+}
+
+.inventory-card-details {
+    padding: 15px;
+    width: 100%;
+    /* Ensure details take full width */
+}
+
+.inventory-card-details h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #34495e;
+    font-size: 1.2em;
+}
+
+.inventory-card-details p {
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 0.95em;
+}
+
+.inventory-card-details .btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    border-radius: 4px;
+}
+
+/* Modal Styles (for Update Stock Item Modal) */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    /* High z-index to appear on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Dark overlay */
+    display: flex;
+    /* Use flex to center content easily */
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    /* Add padding to prevent content from touching edges */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    /* Center vertically and horizontally */
+    padding: 30px;
+    border: 1px solid #888;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    /* For positioning the close button */
+    max-width: 500px;
+    /* Max width for the modal */
+    width: 90%;
+    /* Responsive width */
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-title {
+    color: #34495e;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.8em;
+}
+
+.close {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close:hover,
+.close:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+.update-stock-form .form-input {
+    margin-bottom: 15px;
+    /* Space between inputs in modal form */
+    width: 100%;
+    /* Full width inputs */
+}
+
+/* Sales Section Specific Styles */
+/* Reuse .add-item-form, .form-input, .form-select, .btn-primary */
+
+/* Table Styles (Modern Table from reports_section, ensure consistent styling) */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    /* Ensures rounded corners apply to content */
+}
+
+.modern-table thead {
+    background-color: #34495e;
+    color: white;
+}
+
+.modern-table th,
+.modern-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.modern-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.modern-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.modern-table tfoot {
+    background-color: #eaf1ff;
+    font-weight: bold;
+}
+
+.modern-table tfoot td {
+    padding: 15px;
+    border-top: 2px solid #aeb8d6;
+}
+
+/* No data message for tables */
+.modern-table tbody td[colspan] {
+    font-style: italic;
+    color: #888;
+    padding: 20px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .inventory-cards-container {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .section-container {
+        padding: 15px;
+        margin: 15px auto;
+    }
+
+    .section-title {
+        font-size: 1.7em;
+    }
+
+    .add-item-form {
+        flex-direction: column;
+        /* Stack form inputs vertically */
+        padding: 15px;
+        gap: 10px;
+        align-items: stretch;
+        /* Stretch items to fill width */
+    }
+
+    .form-input,
+    .form-select,
+    .btn-primary,
+    .btn-success {
+        min-width: unset;
+        /* Remove min-width when stacking */
+        width: 100%;
+        /* Full width when stacked */
+    }
+
+    .inventory-cards-container {
+        grid-template-columns: 1fr;
+        /* Stack cards vertically */
+        padding: 15px;
+    }
+
+    .inventory-card {
+        flex-direction: row;
+        /* Layout image and details side-by-side */
+        text-align: left;
+        align-items: flex-start;
+        /* Align content to the top */
+    }
+
+    .inventory-card-image {
+        width: 120px;
+        /* Smaller image */
+        height: 120px;
+        border-bottom: none;
+        border-right: 1px solid #eee;
+        /* Separator for image and details */
+        flex-shrink: 0;
+        /* Prevent image from shrinking */
+    }
+
+    .inventory-card-details {
+        padding: 10px 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        flex-grow: 1;
+    }
+
+    .inventory-card-details div {
+        /* For the buttons container */
+        display: flex;
+        justify-content: flex-end;
+        /* Push buttons to the right */
+        margin-top: 10px;
+    }
+
+    /* Responsive Table (similar to reports_section) */
+    .modern-table {
+        font-size: 0.9em;
+        white-space: nowrap;
+        /* Prevents text from wrapping within table cells */
+    }
+
+    .modern-table thead,
+    .modern-table tbody,
+    .modern-table th,
+    .modern-table td,
+    .modern-table tr {
+        display: block;
+        /* Treat table elements as blocks for stacking */
+    }
+
+    .modern-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        /* Hide table headers visually but keep them for screen readers */
+    }
+
+    .modern-table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .modern-table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        /* Make space for pseudo-element labels */
+        text-align: right;
+    }
+
+    .modern-table td:before {
+        content: attr(data-label);
+        /* Use data-label for responsive labels */
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-left: 15px;
+        font-weight: bold;
+        text-align: left;
+        color: #555;
+    }
+
+    /* Specific data-labels for #cart-items table */
+    #cart-items tr td:nth-of-type(1):before {
+        content: "Item:";
+    }
+
+    #cart-items tr td:nth-of-type(2):before {
+        content: "Size:";
+    }
+
+    #cart-items tr td:nth-of-type(3):before {
+        content: "Quantity:";
+    }
+
+    #cart-items tr td:nth-of-type(4):before {
+        content: "Price:";
+    }
+
+    #cart-items tr td:nth-of-type(5):before {
+        content: "Total:";
+    }
+
+    .modern-table tfoot td {
+        text-align: center !important;
+        padding-left: 15px;
+    }
+
+    .modal-content {
+        padding: 20px;
+        width: 95%;
+        /* Make modal slightly wider on small screens */
+    }
+
+    .modal-title {
+        font-size: 1.5em;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-container {
+        padding: 10px;
+        margin: 10px auto;
+    }
+
+    .section-title {
+        font-size: 1.5em;
+    }
+
+    .add-item-form {
+        padding: 10px;
+    }
+
+    .form-input,
+    .form-select,
+    .btn-primary,
+    .btn-success {
+        padding: 10px;
+        font-size: 0.95em;
+    }
+
+    .inventory-card {
+        flex-direction: column;
+        /* Stack image and details again on very small screens */
+        text-align: center;
+        align-items: center;
+    }
+
+    .inventory-card-image {
+        width: 100%;
+        height: 150px;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    .inventory-card-details {
+        padding: 10px;
+    }
+
+    .inventory-card-details div {
+        /* For the buttons container */
+        justify-content: center;
+        /* Center buttons */
+    }
+
+    .modern-table {
+        font-size: 0.8em;
+    }
+
+    .modern-table td {
+        padding: 8px 8px 8px 45%;
+        /* Adjust padding for smaller labels */
+    }
+
+    .modern-table td:before {
+        width: 40%;
+        padding-left: 8px;
+    }
+}

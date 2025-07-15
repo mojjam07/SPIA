@@ -55,3 +55,26 @@ urlpatterns = [
     path('api/sales-trend/', views.SalesTrendAPIView.as_view(), name='api_sales_trend'),
     path('api/monthly-sales/', views.MonthlySalesAPIView.as_view(), name='api_monthly_sales'),
 ]
+
+
+    
+# from .views import (
+#     ClearDeletedItemsAPIView, ClearSalesAPIView, payment_callback,
+#     VerifyAuthAPIView, DeletedRecordLogListAPIView,
+#     SalesSummaryAPIView, TopProductsAPIView, DailySalesAPIView, WeeklySalesAPIView,
+#     SalesTrendAPIView, MonthlySalesAPIView, RevenueOverviewAPIView, InventoryLevelsAPIView, SendSalesSummaryPDFAPIView, SendDeletedItemsPDFAPIView
+# )
+#     path('login/', views.login, name='login'),
+#     path('signup/', views.signup, name='signup'),
+#     path('payment/', views.payment, name='payment'),
+#     path('payment/callback/', payment_callback, name='payment_callback'),
+#     path('logout/', views.logout, name='logout'),
+#     path('inventory/', views.inventory, name='inventory'),
+#     path('receipt/', views.receipt, name='receipt'),
+#     path('sales/', views.sales, name='sales'),
+#     # API endpoints
+#     path('api/signup/', SignupAPIView.as_view(), name='signup-api'),
+#     path('api/login/', LoginAPIView.as_view(), name='login-api'),
+#     path('api/stock-items/', StockItemListCreateAPIView.as_view(), name='stock-item-list-create'),
+#     path('api/stock-items/<int:pk>/', StockItemRetrieveUpdateDestroyAPIView.as_view(), name='stock-item-retrieve-update-destroy'),
+#     path('api/sales/', SaleRecordCreateAPIView.as_view(), name='sale-record-create'),

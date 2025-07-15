@@ -1,0 +1,315 @@
+/* General Body and Container Styles (can be shared with inventory.css) */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7fa;
+    color: #333;
+}
+
+.section-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Section Titles (can be shared) */
+.section-title {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #3498db;
+}
+
+/* Form Styles (can be shared or slightly modified) */
+.add-item-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    margin-bottom: 40px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    -webkit-appearance: none;
+    /* Remove default select styling for better consistency */
+    -moz-appearance: none;
+    appearance: none;
+    background-color: white;
+    /* Ensure consistent background for select */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%204%205%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M2%200L0%202h4zm0%205L0%203h4z%22%2F%3E%3C%2Fsvg%3E');
+    /* Custom arrow for select */
+    background-repeat: no-repeat;
+    background-position: right 0.7em top 50%;
+    background-size: 0.65em auto;
+}
+
+.form-input:focus,
+.form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.btn-primary {
+    background-color: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-primary i {
+    color: white;
+}
+
+/* Table Styles */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    /* Ensures rounded corners apply to content */
+}
+
+.modern-table thead {
+    background-color: #34495e;
+    color: white;
+}
+
+.modern-table th,
+.modern-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.modern-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.modern-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.modern-table tfoot {
+    background-color: #eaf1ff;
+    font-weight: bold;
+}
+
+.modern-table tfoot td {
+    padding: 15px;
+    border-top: 2px solid #aeb8d6;
+}
+
+/* Empty Cart Message */
+.modern-table #cart-items td[colspan="5"] {
+    font-style: italic;
+    color: #888;
+    padding: 20px;
+}
+
+/* Complete Sale Button */
+.btn-success {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: auto;
+    /* Allow button to size naturally */
+    margin: 1rem auto;
+    /* Center the button */
+}
+
+.btn-success:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+/* FontAwesome Icons - Ensure you have FontAwesome linked in your base.html */
+/* <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> */
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .section-title {
+        font-size: 1.7em;
+    }
+
+    .add-item-form {
+        grid-template-columns: 1fr;
+        /* Stack inputs on small screens */
+    }
+
+    .btn-primary {
+        width: 100%;
+        /* Full width button on small screens */
+    }
+
+    .modern-table {
+        font-size: 0.9em;
+        /* Reduce font size for tables on smaller screens */
+        display: block;
+        /* Allows table to scroll horizontally if content is too wide */
+        overflow-x: auto;
+        /* Enables horizontal scrolling for the table */
+        white-space: nowrap;
+        /* Prevents text from wrapping within table cells */
+    }
+
+    .modern-table thead,
+    .modern-table tbody,
+    .modern-table th,
+    .modern-table td,
+    .modern-table tr {
+        display: block;
+        /* Treat table elements as blocks for stacking */
+    }
+
+    .modern-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        /* Hide table headers visually but keep them for screen readers */
+    }
+
+    .modern-table tr {
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .modern-table td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+        /* Make space for pseudo-element labels */
+        text-align: right;
+    }
+
+    .modern-table td:before {
+        content: attr(data-label);
+        /* Use data-label for responsive labels */
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-left: 15px;
+        font-weight: bold;
+        text-align: left;
+        color: #555;
+    }
+
+    /* Specific data-labels for each column */
+    .modern-table tbody tr td:nth-of-type(1):before {
+        content: "Item:";
+    }
+
+    .modern-table tbody tr td:nth-of-type(2):before {
+        content: "Size:";
+    }
+
+    .modern-table tbody tr td:nth-of-type(3):before {
+        content: "Quantity:";
+    }
+
+    .modern-table tbody tr td:nth-of-type(4):before {
+        content: "Price:";
+    }
+
+    .modern-table tbody tr td:nth-of-type(5):before {
+        content: "Total:";
+    }
+
+    .modern-table tfoot td {
+        text-align: center !important;
+        /* Center footer total */
+        padding-left: 15px;
+    }
+
+    .btn-success {
+        width: 90%;
+        /* Make button wider on small screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .section-container {
+        padding: 15px;
+        margin: 15px auto;
+    }
+
+    .section-title {
+        font-size: 1.5em;
+    }
+
+    .form-input,
+    .form-select,
+    .btn-primary {
+        padding: 10px;
+        font-size: 1em;
+    }
+
+    .modern-table {
+        font-size: 0.85em;
+    }
+
+    .modern-table td {
+        padding: 10px 10px 10px 45%;
+        /* Adjust padding for smaller labels */
+    }
+
+    .modern-table td:before {
+        width: 40%;
+        padding-left: 10px;
+    }
+
+    .btn-success {
+        padding: 12px 20px;
+        font-size: 1.1em;
+        width: 100%;
+    }
+}

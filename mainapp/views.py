@@ -870,6 +870,24 @@ def login(request):
 from rest_framework.permissions import IsAuthenticated
 from mainapp.authentication import CookieTokenAuthentication
 
+class PaymentAPIView(APIView):
+    """
+    API endpoint to handle user payment status update.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+
+    def post(self, request):
+        user = request.user
+        try:
+            payment_status_obj, created = PaymentStatus.objects.get_or_create(user=user)
+            payment_status_obj.paid = True
+            payment_status_obj.save()
+            return Response({'message': 'Payment status updated successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ClearDeletedItemsAPIView(APIView):
     """
     API endpoint to clear all deleted items records from DeletedRecordLog.

@@ -168,7 +168,7 @@ function displayStockItems(items) {
                     <p>Quantity: ${item.quantity}</p>
                     <div style="display: flex; justify-content: space-between; gap: 10px;">
                         <button class="btn btn-sm btn-primary" onclick="deleteStockItem(${item.id})">Delete</button>
-                        <button class="btn btn-sm btn-primary" onclick="openUpdateModal(${item.id}, ${item.quantity}, ${item.price})">Update</button>
+                        <button class="btn btn-sm btn-primary" onclick="openUpdateModal(${item.id}, ${item.quantity}, ${item.price})">Edit</button>
                     </div>
                 </div>
             `;
@@ -720,11 +720,11 @@ function displayDeletedItems(items) {
     items.forEach(item => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${item.name}</td>
+            <td>${item.item_name}</td>
             <td>${item.size || ''}</td>
-            <td>₦${item.price.toFixed(2)}</td>
+            <td>₦${parseFloat(item.price).toFixed(2)}</td>
             <td>${item.quantity}</td>
-            <td>${new Date(item.deletedAt).toLocaleString()}</td>
+            <td>${new Date(item.deleted_at).toLocaleString()}</td>
             <td>${item.snapshot ? '<a href="' + item.snapshot + '" target="_blank">View</a>' : ''}</td>
         `;
         tableBody.appendChild(tr);

@@ -1,0 +1,109 @@
+/* Footer Styles */
+.footer {
+    background-color: #34495e;
+    /* Dark background, consistent with navbar */
+    color: rgba(255, 255, 255, 0.7);
+    /* Light text color */
+    padding: 30px 0;
+    font-size: 0.9em;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* Subtle top border */
+}
+
+.footer .container {
+    max-width: 1200px;
+    /* Max width consistent with other sections */
+    margin: 0 auto;
+    padding: 0 20px;
+    /* Horizontal padding */
+    display: flex;
+    /* Use flexbox for layout */
+    flex-wrap: wrap;
+    /* Allow items to wrap on smaller screens */
+    justify-content: space-between;
+    /* Space out content horizontally */
+    align-items: center;
+    /* Vertically align content */
+}
+
+.footer .row {
+    display: flex;
+    /* Use flex for the row within the footer */
+    width: 100%;
+    /* Ensure row takes full width */
+    flex-wrap: wrap;
+    /* Allow columns to wrap */
+}
+
+.footer .col-md-6 {
+    flex: 1;
+    /* Allow columns to grow */
+    min-width: 280px;
+    /* Minimum width for columns before wrapping */
+    padding: 10px 0;
+    /* Vertical padding for content within columns */
+}
+
+.footer .text-end {
+    text-align: right;
+    /* Align text to the right for the second column */
+}
+
+.footer p {
+    margin: 0;
+    /* Remove default paragraph margins */
+    line-height: 1.6;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .footer .container {
+        flex-direction: column;
+        /* Stack content vertically */
+        text-align: center;
+        /* Center align text when stacked */
+        padding: 0 15px;
+        /* Adjust padding for smaller screens */
+    }
+
+    .footer .col-md-6 {
+        min-width: unset;
+        /* Remove min-width to allow full stacking */
+        width: 100%;
+        /* Full width when stacked */
+        text-align: center;
+        /* Center align text for all columns */
+    }
+
+    .footer .text-end {
+        text-align: center;
+        /* Override right alignment for small screens */
+    }
+
+    .footer p {
+        margin-bottom: 10px;
+        /* Add some space between stacked paragraphs */
+    }
+
+    .footer p:last-child {
+        margin-bottom: 0;
+        /* No margin after the very last paragraph */
+    }
+}
+
+@media (max-width: 480px) {
+    .footer {
+        padding: 20px 0;
+        /* Reduce padding for very small screens */
+    }
+
+    .footer .container {
+        padding: 0 10px;
+        /* Reduce horizontal padding further */
+    }
+
+    .footer p {
+        font-size: 0.85em;
+        /* Slightly smaller font size */
+    }
+}
