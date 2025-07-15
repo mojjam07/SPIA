@@ -207,7 +207,11 @@ body.other-page {
     justify-content: space-between;
     align-items: center;
 }
-
+@media (max-width: 768px) {
+    .btn-container {
+        flex-direction: column; /* Stack buttons vertically on smaller screens */
+    }
+}
 .access-btn {
     padding: 1rem 2rem;
     border: none;
@@ -241,9 +245,15 @@ body.other-page {
     background: rgba(255, 255, 255, 0.8);
     color: #374151;
     border: 2px solid rgba(102, 126, 234, 0.2);
+/* Media Queries for access.css */
+}
+/* Small devices (phones, 600px and down) */
+@media (max-width: 600px) {
+    .access-container {
+        padding: 1rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
-
+}
 .btn-secondary:hover {
     background: rgba(102, 126, 234, 0.1);
     border-color: rgba(102, 126, 234, 0.4);
