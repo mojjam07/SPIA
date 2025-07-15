@@ -447,37 +447,6 @@ class LoginAPIView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-@method_decorator(csrf_exempt, name='dispatch')
-class PaymentAPIView(APIView):
-    """
-    API endpoint for payment processing.
-    
-    POST /api/payment/
-    - Processes payment for authenticated user
-    - Updates payment status in database
-    - Includes improved authentication checks and logging
-    
-    Requires: Token authentication
-    """
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [CookieTokenAuthentication]
-
-    def post(self, request):
-        if not request.user or not request.user.is_authenticated:
-            logger.warning(f"PaymentAPIView: Unauthenticated access attempt from IP {request.META.get('REMOTE_ADDR')}")
-            return Response({'error': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        # TODO: Implement actual payment processing
-        # For now, assume payment is successful
-        payment_status_obj, created = PaymentStatus.objects.get_or_create(user=request.user)
-        payment_status_obj.paid = True
-        payment_status_obj.save()
-        
-        return Response(
-            {'message': 'Payment successful.'}, 
-            status=status.HTTP_200_OK
-        )
-
 # ============================================================================
 # REST API VIEWS - INVENTORY MANAGEMENT
 # ============================================================================
