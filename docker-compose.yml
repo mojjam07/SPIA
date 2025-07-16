@@ -5,17 +5,22 @@ services:
     build: .
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     environment:
-      - DEBUG=True
+      - DEBUG=False
       - DATABASE_URL=postgresql://postgres:password@db:5432/django_db
       - DJANGO_DEPLOYMENT=true
+      - SECRET_KEY=your-production-secret-key
+      - ALLOWED_HOSTS=spia-fkbo.onrender.com,www.spia-fkbo.onrender.com
     depends_on:
       - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+             gunicorn project.wsgi:application --bind 0.0.0.0:8000 --workers 3"
 
   db:
     image: postgres:15
