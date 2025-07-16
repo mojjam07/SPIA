@@ -1,14 +1,12 @@
 setuptools>=65.5.1
 Django==4.2.7
 django-environ==0.11.2
-whitenoise==6.5.0
 gunicorn==21.2.0
-# psycopg2-binary==2.9.9
+whitenoise==6.5.0
+pillow==10.0.0
 python-dotenv==1.0.0
 djangorestframework==3.14.0
 reportlab>=4.0.0
-# psycopg2-binary
-# dj-database-url
 psycopg2-binary==2.9.7
 dj-database-url==2.1.0
 
@@ -23,9 +21,6 @@ dj-database-url>=2.0.0
 
 # Web Server
 gunicorn>=21.2.0
-
-# Static Files
-whitenoise>=6.5.0
 
 # Security & Performance
 django-cors-headers>=4.2.0
