@@ -1,5 +1,4 @@
 import os
-import dj_database_url
 
 from pathlib import Path
 
@@ -15,13 +14,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'your-fallback-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = [
-    'spia-fkbo.onrender.com',
-    'localhost',
-    '127.0.0.1',
-    # Add any other domains you need
-]
 
 # For production
 if os.environ.get('RENDER'):
@@ -84,14 +76,11 @@ WSGI_APPLICATION = 'project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# Database configuration
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
