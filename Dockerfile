@@ -32,6 +32,12 @@ RUN mkdir -p /app/staticfiles
 RUN python manage.py makemigrations
 RUN python manage.py migrate
 
+RUN mkdir -p /app/media/stock_images
+RUN mkdir -p /app/staticfiles
+
+# Copy static files
+COPY media/ /app/media/
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
