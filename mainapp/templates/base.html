@@ -17,14 +17,22 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'styles.css' %}" />
     <link rel="icon" type="image/png" href="{% static 'images/stockpilot.png' %}" />
+    <style>
+      body.index-page {
+        /* Apply the gradient background from the landing/login page theme */
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-attachment: fixed; /* Ensures the gradient doesn't scroll with page content */
+      }
+    </style>
   </head>
 
   <body class="index-page">
     {% include "navbar.html" %}
     <div class="page-wrapper">
       {% block content %}{% endblock %}
-      {% include "footer.html" %}
+      <!-- {% include "footer.html" %} -->
     </div>
+    {% include "footer.html" %}
     {% block scripts %}
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
