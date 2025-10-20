@@ -4,6 +4,11 @@
     gap: 10px;
 }
 
+/* added styles */
+.page-wrapper {
+    margin: 5px 10px;
+}
+
 .btn-sm.btn-danger {
     background-color: #e55353;
     border: none;

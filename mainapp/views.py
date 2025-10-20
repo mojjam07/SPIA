@@ -527,13 +527,13 @@ class StockItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
 class SaleRecordCreateAPIView(APIView):
     """
     API endpoint for recording sales transactions.
-    
+
     POST /api/sales/
     - Records new sales transaction
     - Handles both authenticated and anonymous sales
     - Stores detailed transaction information
     - Improved error handling and logging
-    
+
     Request Body:
     {
         "items": [array of sold items],
@@ -542,7 +542,7 @@ class SaleRecordCreateAPIView(APIView):
     }
     """
     permission_classes = [AllowAny]
-    authentication_classes = []
+    authentication_classes = [CookieTokenAuthentication]
 
     def post(self, request):
         try:
@@ -555,7 +555,7 @@ class SaleRecordCreateAPIView(APIView):
                 user = User.objects.filter(is_superuser=True).first()
                 if not user:
                     return Response(
-                        {'error': 'No valid user found to assign sale record.'}, 
+                        {'error': 'No valid user found to assign sale record.'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
             
@@ -567,7 +567,7 @@ class SaleRecordCreateAPIView(APIView):
             # Validate sale data
             if not items or total <= 0:
                 return Response(
-                    {'error': 'Invalid sale data.'}, 
+                    {'error': 'Invalid sale data.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -581,7 +581,7 @@ class SaleRecordCreateAPIView(APIView):
             sales_record.save()
 
             return Response(
-                {'message': 'Sale recorded successfully.'}, 
+                {'message': 'Sale recorded successfully.'},
                 status=status.HTTP_201_CREATED
             )
             
@@ -590,7 +590,7 @@ class SaleRecordCreateAPIView(APIView):
             tb = traceback.format_exc()
             logger.error(f"Exception in SaleRecordCreateAPIView POST: {str(e)}\n{tb}")
             return Response(
-                {'error': str(e), 'traceback': tb}, 
+                {'error': str(e), 'traceback': tb},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -956,6 +956,16 @@ class SalesSummaryAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return SalesRecord.objects.all()
+
+class SalesRecordRetrieveAPIView(generics.RetrieveAPIView):
+    """
+    API endpoint to retrieve a single sales record.
+    Requires authentication.
+    """
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [CookieTokenAuthentication]
+    serializer_class = SalesRecordSerializer
+    queryset = SalesRecord.objects.all()
 
 from rest_framework.views import APIView
 from rest_framework.response import Response

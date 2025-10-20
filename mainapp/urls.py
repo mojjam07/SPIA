@@ -42,6 +42,7 @@ urlpatterns = [
 
     # New API endpoint for sales summary list
     path('api/sales-summary/', views.SalesSummaryAPIView.as_view(), name='api_sales_summary'),
+    path('api/sales-summary/<int:pk>/', views.SalesRecordRetrieveAPIView.as_view(), name='api_sales_detail'),
 
     path('api/clear-sales/', views.ClearSalesAPIView.as_view(), name='api_clear_sales'),
     path('api/clear-deleted-items/', views.ClearDeletedItemsAPIView.as_view(), name='api_clear_deleted_items'),

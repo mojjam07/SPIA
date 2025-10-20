@@ -359,17 +359,23 @@ async function loadSaleItems() {
             const quantity = parseInt(quantityInput.value);
             const availableStock = parseInt(selectedOption.dataset.stock);
             const itemId = selectedOption.value;
-            
+
             if (quantity <= 0) {
                 alert('Quantity must be positive.');
                 return;
             }
-            
-            if (quantity > availableStock) {
-                alert(`Only ${availableStock} items available in stock.`);
+
+            // Calculate current quantity of this item already in cart
+            let cartQty = 0;
+            cart.forEach(c => {
+                if (c.id == itemId) cartQty += c.quantity;
+            });
+
+            if (quantity + cartQty > availableStock) {
+                alert(`Only ${availableStock - cartQty} items available in stock.`);
                 return;
             }
-            
+
             // Add to cart
             cart.push({ item_name, size, price, quantity, id: itemId, stock: availableStock });
             updateCartDisplay();
@@ -430,14 +436,14 @@ if (completeSaleBtn) {
                         console.error(`Error updating stock for item ID ${item.id}:`, updateError);
                     }
                 }
+                // Print receipt before clearing the cart
+                printReceipt(cart, total, customerName);
                 cart = [];
                 updateCartDisplay();
                 // Refresh stock items to update quantities
                 fetchStockItems();
                 loadSaleItems();
-                // Print receipt
-                printReceipt(cart, total, customerName);
-                // Refresh sales report section
+                // Refresh sales report section if it exists
                 fetchSalesSummary();
             } else {
                 alert('Failed to record sale: ' + (data.error || 'Unknown error'));
@@ -666,11 +672,123 @@ function printReceipt(cart, total, customerName) {
     receiptWindow.document.close();
     receiptWindow.focus();
     receiptWindow.print();
-    receiptWindow.close();
+    // Close the window after printing is done
+    receiptWindow.addEventListener('afterprint', () => receiptWindow.close());
 }
 
-window.viewSaleDetails = function viewSaleDetails(saleId) {
-    alert('View details for sale ID: ' + saleId);
+// Print receipt from sale record
+function printReceiptFromSale(sale) {
+    let receiptWindow = window.open('', 'Print Receipt', 'width=300,height=600');
+    let receiptContent = `
+        <html>
+        <head>
+            <title>POS Receipt</title>
+            <style>
+                body {
+                    font-family: monospace;
+                    font-size: 12px;
+                    width: 280px;
+                    padding: 10px;
+                }
+                h2, h3, p {
+                    text-align: center;
+                    margin: 5px 0;
+                }
+                .line {
+                    border-top: 1px dashed #000;
+                    margin: 5px 0;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    padding: 2px 5px;
+                    text-align: left;
+                }
+                th {
+                    border-bottom: 1px solid #000;
+                }
+                .right {
+                    text-align: right;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>StockPilot Store</h2>
+            <p>Customer: ${sale.customer_name || 'N/A'}</p>
+            <p>${new Date(sale.timestamp).toLocaleString()}</p>
+            <div class="line"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th class="right">Price</th>
+                        <th class="right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    if (!sale.items || sale.items.length === 0) {
+        receiptContent += `
+            <tr>
+                <td colspan="4" style="text-align: center; color: #666;">No items in sale</td>
+            </tr>
+        `;
+    } else {
+        sale.items.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            receiptContent += `
+                <tr>
+                    <td>${item.item_name} (${item.size || ''})</td>
+                    <td>${item.quantity}</td>
+                    <td class="right">₦${item.price.toFixed(2)}</td>
+                    <td class="right">₦${itemTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    }
+
+    receiptContent += `
+                </tbody>
+            </table>
+            <div class="line"></div>
+            <h3>Total: ₦${sale.total.toFixed(2)}</h3>
+            <p style="text-align: center;">Thank you for your purchase!</p>
+        </body>
+        </html>
+    `;
+
+    receiptWindow.document.write(receiptContent);
+    receiptWindow.document.close();
+    receiptWindow.focus();
+    receiptWindow.print();
+    // Close the window after printing is done
+    receiptWindow.addEventListener('afterprint', () => receiptWindow.close());
+}
+
+window.viewSaleDetails = async function viewSaleDetails(saleId) {
+    try {
+        const response = await fetch(`/api/sales-summary/${saleId}/`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        if (response.ok) {
+            const sale = await response.json();
+            printReceiptFromSale(sale);
+        } else if (response.status === 401 || response.status === 403) {
+            alert('Authentication failed. Please log in again.');
+            window.location.href = '/login/';
+        } else {
+            alert('Failed to fetch sale details.');
+        }
+    } catch (error) {
+        console.error('Error fetching sale details:', error);
+        alert('Error fetching sale details: ' + error.message);
+    }
 };
 
 // Fetch and display deleted items in reports section
