@@ -158,6 +158,24 @@ if not DEBUG:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Logging configuration to suppress runserver warning
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.utils.autoreload': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Suppress the runserver warning
+            'propagate': False,
+        },
+    },
+}
+
 # Import deployment settings if DJANGO_DEPLOYMENT environment variable is set
 if os.getenv('DJANGO_DEPLOYMENT') == 'true':
     from .deployment_settings import *

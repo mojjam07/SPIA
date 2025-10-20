@@ -164,7 +164,7 @@ function displayStockItems(items) {
                 <div class="inventory-card-details">
                     <h4>${item.item_name}</h4>
                     <p>Size: ${item.size}</p>
-                    <p>Price: ₦${item.price}</p>
+                    <p class="price">Price: ₦${parseFloat(item.price).toFixed(2)}</p>
                     <p>Quantity: ${item.quantity}</p>
                     <div style="display: flex; justify-content: space-between; gap: 10px;">
                         <button class="btn btn-sm btn-primary" onclick="deleteStockItem(${item.id})">Delete</button>
